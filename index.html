@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#788899">
+<title>Murmuration — a sky in motion</title>
+<style>
+:root{color-scheme:light;--ink:#20303d;--muted:#52616c;--line:rgba(42,60,74,.18);--accent:#ae633d;--paper:rgba(241,239,231,.82);font-family:"Segoe UI",Arial,sans-serif;font-size:13px}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;background:#91a1b0;color:var(--ink)}
+button,input,summary{font:inherit}button,summary,input{touch-action:manipulation}button{color:inherit}button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid #8d4c30;outline-offset:4px}
+#sky{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+.masthead{position:fixed;top:max(30px,env(safe-area-inset-top));left:max(34px,env(safe-area-inset-left));pointer-events:none;user-select:none}
+.eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;margin:0 0 9px;color:#344959}
+h1{font-family:"Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;font-weight:400;font-size:clamp(35px,4.5vw,62px);letter-spacing:-.045em;line-height:1.05;margin:0}
+.subtitle{color:#445a68;margin:11px 0 0;font-size:12px;letter-spacing:.035em}
+.telemetry{position:fixed;right:max(32px,env(safe-area-inset-right));top:max(31px,env(safe-area-inset-top));display:flex;gap:24px;text-align:right;font-variant-numeric:tabular-nums;pointer-events:none}
+.metric strong{font-size:20px;font-weight:400;letter-spacing:-.04em}.metric span{display:block;font-size:9px;letter-spacing:.16em;text-transform:uppercase;margin-top:4px;color:var(--muted)}
+#status{position:fixed;left:50%;top:26px;transform:translateX(-50%);font-size:10px;letter-spacing:.17em;text-transform:uppercase;padding:7px 12px;background:rgba(241,239,231,.48);border:1px solid rgba(255,255,255,.3);border-radius:20px;pointer-events:none;opacity:0;transition:opacity .2s}#status.visible{opacity:1}
+#controls{position:fixed;left:max(34px,env(safe-area-inset-left));bottom:max(30px,env(safe-area-inset-bottom));width:280px;max-height:calc(100dvh - 180px);overflow:auto;background:var(--paper);border:1px solid rgba(255,255,255,.4);border-radius:12px;backdrop-filter:blur(18px);box-shadow:0 8px 30px rgba(28,43,58,.06);scrollbar-width:thin}
+summary{list-style:none;padding:16px 18px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;font-size:12px;letter-spacing:.03em}summary::-webkit-details-marker{display:none}.summary-end{display:flex;gap:13px;align-items:center}.live-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#96744d;box-shadow:0 0 0 4px rgba(150,116,77,.1)}.chevron{font-size:15px;line-height:1;transition:transform .15s}details[open] .chevron{transform:rotate(45deg)}
+.panel-body{padding:0 18px 16px;border-top:1px solid var(--line)}.group{padding-top:15px}.group+.group{margin-top:15px;border-top:1px solid var(--line)}.group-title{margin:0 0 12px;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.15em;color:var(--muted)}
+.slider-row{margin:0 0 12px}.slider-label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;margin-bottom:6px}.slider-label output{font-family:Consolas,"Courier New",monospace;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+input[type=range]{display:block;width:100%;height:3px;margin:9px 0 0;cursor:pointer;appearance:none;background:rgba(38,58,75,.18);border-radius:8px;accent-color:var(--accent)}input[type=range]::-webkit-slider-thumb{appearance:none;width:10px;height:10px;border:2px solid #f2eee6;background:var(--ink);border-radius:50%;box-shadow:0 0 0 1px rgba(32,48,61,.3)}input[type=range]::-moz-range-thumb{width:7px;height:7px;background:var(--ink);border:2px solid #f2eee6;border-radius:50%}
+.advanced{margin-top:12px;border-top:1px solid var(--line)}.advanced summary{padding:12px 0 0;font-size:10px;color:var(--muted)}.advanced-body{padding-top:14px}.toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:11px;margin-top:15px}input[type=checkbox]{accent-color:#8e6347;width:15px;height:15px;margin:0}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}.actions button{border:1px solid var(--line);border-radius:5px;background:rgba(255,255,255,.25);padding:8px 6px;cursor:pointer;font-size:11px}.actions button:hover{background:rgba(255,255,255,.65)}.key{font:9px Consolas,monospace;opacity:.6;margin-left:8px}
+.actions .clean-button{grid-column:1/-1;background:#344b5a;color:#f3eee5;border-color:transparent}.actions .clean-button:hover{background:#203a4c}.clean-option{font-size:10px;gap:12px;line-height:1.5}
+.interval-sliders{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}.raptor-toggle{margin-top:0}.raptor-button{width:100%;border:1px solid rgba(179,56,42,.3);border-radius:5px;background:rgba(216,50,42,.08);padding:9px;color:#a63028;font-size:11px;cursor:pointer}.raptor-button:hover{background:rgba(216,50,42,.16)}
+.masthead,.telemetry,#controls,.field-note{transition:opacity .4s ease,visibility 0s linear}#status{transition:opacity .4s ease,visibility 0s linear}
+body.clean-play .masthead,body.clean-play .telemetry,body.clean-play #controls,body.clean-play #status,body.clean-play .field-note{opacity:0!important;visibility:hidden;pointer-events:none;transition:opacity .4s ease,visibility 0s linear .4s}
+body.clean-play.cursor-hidden,body.clean-play.cursor-hidden #sky{cursor:none!important}
+.field-note{position:fixed;right:max(32px,env(safe-area-inset-right));bottom:max(31px,env(safe-area-inset-bottom));text-align:right;pointer-events:none;font-size:11px;line-height:1.9;color:#344b5d}.field-note b{font-weight:500;color:#253e52}.field-note .touch-help{display:none}.field-caption{font-size:9px;letter-spacing:.14em;text-transform:uppercase;margin-top:11px;opacity:.7}
+#fallback{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:28px;text-align:center;background:linear-gradient(155deg,#8499af,#c7b4af 62%,#edc4a4)}#fallback[hidden]{display:none}.fallback-body{max-width:460px}.fallback-mark{font-family:Georgia,serif;font-size:50px;font-weight:400;letter-spacing:-.04em;margin:0 0 24px}.fallback-body h2{font-size:18px;font-weight:500;margin:0 0 12px}.fallback-body p{font-size:14px;line-height:1.8;color:#344957;margin:0}.fallback-small{font-size:11px!important;margin-top:20px!important;opacity:.8}
+@media(max-width:640px){.masthead{left:22px;top:max(24px,env(safe-area-inset-top))}.eyebrow{font-size:8px;letter-spacing:.15em}h1{font-size:35px}.subtitle{font-size:10px;max-width:210px;line-height:1.5}.telemetry{top:max(27px,env(safe-area-inset-top));right:21px;gap:13px}.metric strong{font-size:16px}.metric span{font-size:8px;letter-spacing:.08em}#controls{left:18px;bottom:max(19px,env(safe-area-inset-bottom));width:min(270px,calc(100vw - 36px));max-height:calc(100dvh - 156px)}summary{padding:14px 16px}.field-note{right:21px;bottom:max(88px,env(safe-area-inset-bottom));font-size:9px}.field-note .mouse-help{display:none}.field-note .touch-help{display:block}.field-caption{font-size:8px;margin-top:7px}#status{top:112px;font-size:8px}.group{padding-top:13px}.slider-row{margin-bottom:11px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}.live-dot{box-shadow:none}}
+@media(max-width:640px){#controls[open]~.field-note{opacity:0;visibility:hidden}}
+</style>
+</head>
+<body>
+<canvas id="sky" tabindex="0" aria-label="Interactive 3D bird flock. Move to scatter; hold to attract. Right drag to orbit. Space pauses, R resets, F follows, H opens Clean Play, P summons a raptor."></canvas>
+<header class="masthead"><p class="eyebrow">An evening in the open sky</p><h1>Murmuration</h1><p class="subtitle">Thousands of wings. A shared instinct.</p></header>
+<aside class="telemetry" aria-label="Performance"><div class="metric"><strong id="fps">—</strong><span>frames / sec</span></div><div class="metric"><strong id="bird-count">4,096</strong><span>birds</span></div></aside>
+<div id="status" role="status" aria-live="polite"></div>
+<details id="controls" open>
+ <summary><span>Flight controls</span><span class="summary-end"><i class="live-dot"></i><span class="chevron" aria-hidden="true">+</span></span></summary>
+ <div class="panel-body">
+  <div class="group">
+   <div class="slider-row"><label class="slider-label" for="count">Birds <output id="count-out">4,096</output></label><input id="count" type="range" min="256" max="16384" step="256" value="4096"></div>
+   <p class="group-title">Flock instinct</p>
+   <div class="slider-row"><label class="slider-label" for="separation">Separation <output id="separation-out">1.65</output></label><input id="separation" type="range" min="0" max="4" step="0.05" value="1.65"></div>
+   <div class="slider-row"><label class="slider-label" for="alignment">Alignment <output id="alignment-out">1.15</output></label><input id="alignment" type="range" min="0" max="4" step="0.05" value="1.15"></div>
+   <div class="slider-row"><label class="slider-label" for="cohesion">Cohesion <output id="cohesion-out">0.80</output></label><input id="cohesion" type="range" min="0" max="3" step="0.05" value="0.8"></div>
+  </div>
+  <div class="group">
+   <p class="group-title">Your presence</p>
+   <div class="slider-row"><label class="slider-label" for="mouse-radius">Influence radius <output id="mouse-radius-out">22</output></label><input id="mouse-radius" type="range" min="5" max="45" step="1" value="22"></div>
+   <div class="slider-row"><label class="slider-label" for="mouse-strength">Influence strength <output id="mouse-strength-out">48</output></label><input id="mouse-strength" type="range" min="5" max="100" step="1" value="48"></div>
+   <div class="slider-row"><label class="slider-label" for="flap">Wingbeat speed <output id="flap-out">1.00×</output></label><input id="flap" type="range" min="0.25" max="2.5" step="0.05" value="1"></div>
+  </div>
+  <div class="group">
+   <p class="group-title">Raptor attacks</p>
+   <label class="toggle raptor-toggle" for="raptor-auto">Automatic attacks <input id="raptor-auto" type="checkbox" checked></label>
+   <div class="interval-sliders">
+    <div class="slider-row"><label class="slider-label" for="raptor-min">Min interval <output id="raptor-min-out">4.0 s</output></label><input id="raptor-min" type="range" min="2" max="10" step="0.5" value="4"></div>
+    <div class="slider-row"><label class="slider-label" for="raptor-max">Max interval <output id="raptor-max-out">8.0 s</output></label><input id="raptor-max" type="range" min="2" max="10" step="0.5" value="8"></div>
+   </div>
+   <button id="summon-raptor" class="raptor-button" type="button">Summon Raptor <span class="key">P</span></button>
+  </div>
+  <details class="advanced"><summary>Perception &amp; flight limits <span aria-hidden="true">+</span></summary><div class="advanced-body">
+   <div class="slider-row"><label class="slider-label" for="separation-radius">Separation radius <output id="separation-radius-out">2.4</output></label><input id="separation-radius" type="range" min="1" max="8" step="0.2" value="2.4"></div>
+   <div class="slider-row"><label class="slider-label" for="alignment-radius">Alignment radius <output id="alignment-radius-out">7.0</output></label><input id="alignment-radius" type="range" min="3" max="16" step="0.5" value="7"></div>
+   <div class="slider-row"><label class="slider-label" for="cohesion-radius">Cohesion radius <output id="cohesion-radius-out">10.0</output></label><input id="cohesion-radius" type="range" min="3" max="16" step="0.5" value="10"></div>
+   <div class="slider-row"><label class="slider-label" for="min-speed">Minimum speed <output id="min-speed-out">7</output></label><input id="min-speed" type="range" min="3" max="12" step="1" value="7"></div>
+   <div class="slider-row"><label class="slider-label" for="max-speed">Maximum speed <output id="max-speed-out">18</output></label><input id="max-speed" type="range" min="13" max="28" step="1" value="18"></div>
+   <div class="slider-row"><label class="slider-label" for="turn-force">Turning force <output id="turn-force-out">24</output></label><input id="turn-force" type="range" min="8" max="42" step="1" value="24"></div>
+  </div></details>
+  <label class="toggle" for="follow">Follow the flock <input id="follow" type="checkbox"></label>
+  <label class="toggle clean-option" for="clean-interaction">Allow interaction in Clean Play <input id="clean-interaction" type="checkbox"></label>
+  <div class="actions"><button id="pause" type="button" aria-pressed="false">Pause <span class="key">SPACE</span></button><button id="reset" type="button">Reset <span class="key">R</span></button><button id="clean-play" class="clean-button" type="button" aria-pressed="false">Clean Play <span class="key">H</span></button></div>
+ </div>
+</details>
+<footer class="field-note"><div class="mouse-help"><b>Move</b> to scatter · <b>Hold</b> to attract<br>Right drag to orbit · Scroll to zoom (also in Clean Play)<br>H for Clean Play · P summons a raptor</div><div class="touch-help">Touch to scatter · Hold to attract<br>Two fingers to orbit &amp; zoom (also in Clean Play)<br>Double tap for Clean Play</div><div class="field-caption">A live study of collective flight</div></footer>
+<section id="fallback" role="status"><div class="fallback-body"><div class="fallback-mark">Murmuration</div><h2 id="fallback-title">Opening the sky…</h2><p id="fallback-message">Preparing thousands of wings.</p><p class="fallback-small" id="fallback-detail">A WebGPU experience, generated entirely on your device.</p></div></section>
+<noscript><style>#fallback{display:grid!important}</style><p style="position:fixed;z-index:11;top:65%;width:100%;text-align:center">Please enable JavaScript to open this experience.</p></noscript>
+<script>
+'use strict';
+(() => {
+const canvas = document.getElementById('sky');
+const fallback = document.getElementById('fallback');
+const panel = document.getElementById('controls');
+if (matchMedia('(max-width: 640px)').matches) panel.open = false;
+const maxBirds = 16384, gridCells = 16384, scanBlocks = 64, fixedDt = 1 / 60, maxSteps = 4;
+const commonShader = /* wgsl */ `
+struct Bird {
+ position: vec4f, // xyz 位置，w 为个体随机种子
+ velocity: vec4f, // xyz 速度，w 为扇翅相位
+ flight: vec4f,   // 侧倾、发力程度、滑翔混合、滑翔/巡航计时器
+ traits: vec4f,   // 受惊程度、频率偏移、翅膀幅度、体型
+}
+struct Params {
+ sim: vec4f, radii: vec4f, weights: vec4f, limits: vec4f,
+ mouse: vec4f, interaction: vec4f,
+ cameraRight: vec4f, cameraUp: vec4f, cameraForward: vec4f,
+ cameraTarget: vec4f, world: vec4f, display: vec4f,
+ showcase: vec4f, showcaseFlight: vec4f, // 猛禽最短/最长间隔、自动开关、召唤序号；恐惧半径、力、淡出、镜头混合
+}
+fn hash(value: u32) -> u32 {
+ var v = value; v = (v ^ (v >> 16u)) * 0x7feb352du;
+ v = (v ^ (v >> 15u)) * 0x846ca68bu; return v ^ (v >> 16u);
+}
+fn random(value: u32) -> f32 { return f32(hash(value) & 0x00ffffffu) / 16777216.0; }
+fn safeNormal(v: vec3f) -> vec3f { return v * inverseSqrt(max(dot(v, v), 0.000001)); }
+fn limitLength(v: vec3f, maximum: f32) -> vec3f { return v * min(1.0, maximum * inverseSqrt(max(dot(v, v), 0.000001))); }
+`;
+const computeShader = commonShader + /* wgsl */ `
+@group(0) @binding(0) var<uniform> u: Params;
+@group(0) @binding(1) var<storage, read> birdsIn: array<Bird>;
+@group(0) @binding(2) var<storage, read_write> birdsOut: array<Bird>;
+@group(0) @binding(3) var<storage, read_write> counts: array<atomic<u32>>;
+@group(0) @binding(4) var<storage, read_write> offsets: array<u32>;
+@group(0) @binding(5) var<storage, read_write> cursors: array<atomic<u32>>;
+@group(0) @binding(6) var<storage, read_write> sortedIds: array<u32>;
+@group(0) @binding(7) var<storage, read_write> blockSums: array<u32>;
+@group(0) @binding(8) var<storage, read_write> moments: array<vec4f>;
+var<workgroup> scan: array<u32, 256>;
+var<workgroup> totals: array<vec4f, 256>;
+var<workgroup> peaks: array<vec2f, 256>;
+fn cellCoord(p: vec3f) -> vec3i { return clamp(vec3i(floor(p / u.radii.w)) + vec3i(16, 8, 16), vec3i(0), vec3i(31, 15, 31)); }
+fn cellIndex(c: vec3i) -> u32 { return u32(c.x + c.y * 32 + c.z * 512); }
+@compute @workgroup_size(64)
+fn initialize(@builtin(global_invocation_id) gid: vec3u) {
+ let id = gid.x; if (id >= 16384u) { return; }
+ let seed = id + u32(u.world.w) * 16387u;
+ let r = random(seed + 1u); let a = random(seed + 2u) * 6.2831853;
+ let band = 22.0 + random(seed + 3u) * 18.0;
+ let p = vec3f(sin(a) * band * 1.25 + (random(seed + 4u) - 0.5) * 20.0,
+   sin(a * 2.0) * 8.0 + (random(seed + 5u) - 0.5) * 24.0,
+   cos(a) * band + (random(seed + 6u) - 0.5) * 19.0);
+ let direction = safeNormal(vec3f(cos(a), cos(a * 2.0) * 0.25, -sin(a)) + vec3f(random(seed+7u)-0.5, random(seed+8u)*0.4-0.2, random(seed+9u)-0.5)*0.45);
+ var b: Bird;
+ b.position = vec4f(p, r); b.velocity = vec4f(direction * (10.0 + r * 4.0), random(seed+10u));
+ b.flight = vec4f(0.0, 0.3, 0.0, -random(seed+11u)*5.5-0.2);
+ b.traits = vec4f(0.0, 0.84+random(seed+12u)*0.32, 0.6, 0.64+random(seed+13u)*0.3);
+ birdsOut[id] = b;
+ if (id == 0u) {
+  for (var i=256u; i<336u; i++) { moments[i]=vec4f(0.0); }
+  moments[267]=vec4f(0.0,mix(u.showcase.x,u.showcase.y,random(u32(u.world.w)+721u)),u.showcase.w,0.0);
+ }
+}
+@compute @workgroup_size(256)
+fn clearGrid(@builtin(global_invocation_id) gid: vec3u) {
+ if (gid.x < 16384u) { atomicStore(&counts[gid.x], 0u); atomicStore(&cursors[gid.x], 0u); }
+}
+@compute @workgroup_size(64)
+fn countGrid(@builtin(global_invocation_id) gid: vec3u) {
+ if (gid.x < u32(u.sim.z)) { atomicAdd(&counts[cellIndex(cellCoord(birdsIn[gid.x].position.xyz))], 1u); }
+}
+// 网格计数同时提供密度峰值，保持查询和追踪都在 GPU 上。
+@compute @workgroup_size(256)
+fn densityPeaks(@builtin(global_invocation_id) gid: vec3u, @builtin(local_invocation_index) lane: u32, @builtin(workgroup_id) group: vec3u) {
+ let index=gid.x; let c=vec3f(f32(index%32u),f32((index/32u)%16u),f32(index/512u));
+ let p=(c-vec3f(16.0,8.0,16.0)+0.5)*u.radii.w; let d=p-moments[256].xyz;
+ peaks[lane]=vec2f(f32(atomicLoad(&counts[index]))/(1.0+dot(d,d)*0.00022),f32(index)); workgroupBarrier();
+ for (var stride=128u; stride>0u; stride/=2u) {
+  if (lane<stride && peaks[lane+stride].x>peaks[lane].x) { peaks[lane]=peaks[lane+stride]; } workgroupBarrier();
+ }
+ if (lane==0u) { moments[272u+group.x]=vec4f(peaks[0],0.0,0.0); }
+}
+// 分块独占扫描；所有线程无条件经过屏障，避免非一致控制流。
+@compute @workgroup_size(256)
+fn scanLocal(@builtin(global_invocation_id) gid: vec3u, @builtin(local_invocation_index) lane: u32, @builtin(workgroup_id) group: vec3u) {
+ let value = atomicLoad(&counts[gid.x]); scan[lane] = value; workgroupBarrier();
+ for (var stride = 1u; stride < 256u; stride *= 2u) {
+  var v = 0u; if (lane >= stride) { v = scan[lane-stride]; }
+  workgroupBarrier(); scan[lane] += v; workgroupBarrier();
+ }
+ offsets[gid.x] = scan[lane] - value;
+ if (lane == 255u) { blockSums[group.x] = scan[255]; }
+}
+@compute @workgroup_size(64)
+fn scanBlockSums(@builtin(local_invocation_index) lane: u32) {
+ let value = blockSums[lane]; scan[lane] = value; workgroupBarrier();
+ for (var stride = 1u; stride < 64u; stride *= 2u) {
+  var v = 0u; if (lane >= stride) { v = scan[lane-stride]; }
+  workgroupBarrier(); scan[lane] += v; workgroupBarrier();
+ }
+ blockSums[lane] = scan[lane] - value;
+}
+@compute @workgroup_size(256)
+fn addBlockOffsets(@builtin(global_invocation_id) gid: vec3u) { offsets[gid.x] += blockSums[gid.x / 256u]; }
+@compute @workgroup_size(64)
+fn scatterGrid(@builtin(global_invocation_id) gid: vec3u) {
+ if (gid.x >= u32(u.sim.z)) { return; }
+ let cell = cellIndex(cellCoord(birdsIn[gid.x].position.xyz));
+ let slot = atomicAdd(&cursors[cell], 1u); sortedIds[offsets[cell]+slot] = gid.x;
+}
+fn hermite(a: vec3f,b: vec3f,ta: vec3f,tb: vec3f,t: f32) -> vec3f {
+ let t2=t*t; let t3=t2*t;
+ return (2.0*t3-3.0*t2+1.0)*a+(t3-2.0*t2+t)*ta+(-2.0*t3+3.0*t2)*b+(t3-t2)*tb;
+}
+fn raptorVisible(p: vec3f) -> bool {
+ let eye=moments[257].xyz*u.cameraTarget.x-u.cameraForward.xyz*u.cameraForward.w;
+ let v=p-eye; let z=dot(v,u.cameraForward.xyz);
+ return z>0.2 && z<603.5 && abs(dot(v,u.cameraRight.xyz))<z*u.cameraUp.w*u.cameraRight.w+3.5 && abs(dot(v,u.cameraUp.xyz))<z*u.cameraUp.w+3.5;
+}
+// 260..271 为单只猛禽的持久状态，272..335 为密度归约暂存区。
+// 位置、速度、上一帧位置、动画、入口、目标、出口、计时、路线、出生目标、离场记录、上一帧动画。
+@compute @workgroup_size(64)
+fn updateRaptor(@builtin(local_invocation_index) lane: u32) {
+ peaks[lane]=moments[272u+lane].xy; workgroupBarrier();
+ for (var stride=32u; stride>0u; stride/=2u) {
+  if (lane<stride && peaks[lane+stride].x>peaks[lane].x) { peaks[lane]=peaks[lane+stride]; } workgroupBarrier();
+ }
+ if (lane!=0u) { return; }
+ let cell=u32(peaks[0].y); let n=atomicLoad(&counts[cell]); let samples=min(n,128u);
+ var dense=vec3f(0.0);
+ for (var j=0u; j<samples; j++) { dense+=birdsIn[sortedIds[offsets[cell]+j*n/max(samples,1u)]].position.xyz; }
+ dense=mix(moments[256].xyz,dense/f32(max(samples,1u)),0.78);
+ moments[259]=vec4f(dense,peaks[0].x);
+ var pose=moments[260]; var motion=moments[261]; var animation=moments[263];
+ var approach=moments[264]; var focus=moments[265]; var departure=moments[266];
+ var timing=moments[267]; var route=moments[268]; let dt=u.sim.x;
+ // 飞行期间也消费召唤序号，不积压、不生成第二只。
+ let manual=u.showcase.w!=timing.z; timing.z=u.showcase.w;
+ timing.y=clamp(timing.y,u.showcase.x,u.showcase.y);
+ if (pose.w<0.5 || route.w>1.5) { timing.x+=dt; }
+ if (pose.w<0.5 && (manual || (u.showcase.z>0.5 && timing.x>=timing.y))) {
+  let seed=u32(u.world.w)*137u+u32(timing.w)*7919u+u32(u.sim.y*100.0);
+  let side=select(-1.0,1.0,random(seed+1u)>0.5);
+  let axis=safeNormal(u.cameraRight.xyz*side+u.cameraForward.xyz*(random(seed+2u)-0.5)*0.42);
+  let duration=4.5+random(seed+3u); let high=67.0+random(seed+4u)*16.0;
+  let halfScreen=u.cameraForward.w*u.cameraUp.w*max(u.cameraRight.w,1.0);
+  focus=vec4f(dense,0.0); approach=vec4f(dense+axis*(133.0+random(seed+5u)*18.0)+vec3f(0.0,high,0.0),duration);
+  departure=vec4f(dense-axis*max(200.0,halfScreen*2.1+85.0)+vec3f(0.0,110.0+random(seed+6u)*20.0,0.0),0.0);
+  pose=vec4f(approach.xyz,1.0); motion=vec4f((dense-approach.xyz)/(duration*0.5),0.0);
+  animation=vec4f(random(seed+7u),0.025,0.76,0.0); route=vec4f(axis,0.0);
+  timing.x=0.0; timing.w+=1.0;
+  moments[269]=vec4f(dense,u.sim.y); moments[270]=vec4f(-1.0,timing.y,duration,0.0);
+ }
+ moments[262]=vec4f(pose.xyz,motion.w); moments[271]=animation;
+ if (pose.w>0.5) {
+  let oldVelocity=motion.xyz; let oldPosition=pose.xyz;
+  // 只缓慢修正瞄准点；出生目标限制追踪范围，避免追着网格峰值急转。
+  let aim=moments[269].xyz+limitLength(dense-moments[269].xyz,8.0);
+  focus=vec4f(focus.xyz+limitLength(aim-focus.xyz,dt*3.5),0.0);
+  departure.w+=dt; let t=departure.w/approach.w; let halfTime=approach.w*0.5;
+  // 用户可能中途转到离去方向：缓慢抬高落在视锥内的出口，避免沿视线飞向无穷远。
+  // 只有出口进入当前视锥时才修正，平滑的抬升速度保存在离场记录的 w 分量。
+  let lift=mix(moments[270].w,select(0.0,95.0,raptorVisible(departure.xyz)),1.0-exp(-dt*2.4));
+  departure=vec4f(departure.xyz+u.cameraUp.xyz*lift*dt,departure.w); moments[270].w=lift;
+  let midVelocity=-route.xyz*44.0+vec3f(0.0,7.0,0.0);
+  let startVelocity=(focus.xyz-approach.xyz)*0.85/halfTime;
+  let endVelocity=(departure.xyz-focus.xyz)*1.35/halfTime;
+  if (t<0.5) { pose=vec4f(hermite(approach.xyz,focus.xyz,startVelocity*halfTime,midVelocity*halfTime,t*2.0),1.0); }
+  else if (t<1.0) { pose=vec4f(hermite(focus.xyz,departure.xyz,midVelocity*halfTime,endVelocity*halfTime,(t-0.5)*2.0),1.0); }
+  else { pose=vec4f(departure.xyz+endVelocity*(departure.w-approach.w),1.0); }
+  let velocity=mix(oldVelocity,(pose.xyz-oldPosition)/dt,1.0-exp(-dt*8.0));
+  let forward=safeNormal(velocity); let right=safeNormal(cross(vec3f(0.0,1.0,0.0),forward));
+  let bank=clamp(-atan(dot((velocity-oldVelocity)/dt,right)*0.022),-0.48,0.48);
+  motion=vec4f(velocity,mix(motion.w,bank,1.0-exp(-dt*2.4)));
+  let climb=smoothstep(0.48,0.64,t);
+  animation=vec4f(fract(animation.x+dt*mix(0.22,3.1,climb)*u.sim.w),mix(0.025,1.15,climb),0.76*(1.0-climb),min(t,1.0));
+  let visible=raptorVisible(pose.xyz);
+  if (route.w<0.5 && visible) { route.w=1.0; }
+  if (route.w>1.5 && visible) { route.w=1.0; timing.x=0.0; }
+  if (t>0.52 && route.w<1.5 && !visible) {
+   // 从实际离开当前视野的模拟时刻计时；尾段继续向外飞，不在画面内消失。
+   route.w=2.0; timing.x=0.0;
+   timing.y=mix(u.showcase.x,u.showcase.y,random(u32(timing.w)*2377u+u32(u.world.w)*19u));
+   moments[270]=vec4f(u.sim.y,timing.y,approach.w,0.0);
+  }
+  // 近景会更早离开视野；四秒后的离屏尾段可提前完成，为最短两秒间隔留出空间。
+  if (departure.w>=4.0 && !visible && (t>=1.0 || timing.x>=1.75)) { pose.w=0.0; }
+ }
+ moments[260]=pose; moments[261]=motion; moments[263]=animation;
+ moments[264]=approach; moments[265]=focus; moments[266]=departure; moments[267]=timing; moments[268]=route;
+}
+fn lattice(p: vec3i) -> f32 { return random((u32(p.x)*73856093u) ^ (u32(p.y)*19349663u) ^ (u32(p.z)*83492791u)); }
+// 三线性值噪声的解析梯度，curl(A) 的散度为零。
+fn noiseGradient(p: vec3f) -> vec3f {
+ let i = vec3i(floor(p)); let f = fract(p); let s = f*f*(3.0-2.0*f); let ds = 6.0*f*(1.0-f);
+ let a=lattice(i); let b=lattice(i+vec3i(1,0,0)); let c=lattice(i+vec3i(0,1,0)); let d=lattice(i+vec3i(1,1,0));
+ let e=lattice(i+vec3i(0,0,1)); let h=lattice(i+vec3i(1,0,1)); let g=lattice(i+vec3i(0,1,1)); let k=lattice(i+vec3i(1,1,1));
+ return vec3f(mix(mix(b-a,d-c,s.y),mix(h-e,k-g,s.y),s.z)*ds.x,
+  mix(mix(c-a,d-b,s.x),mix(g-e,k-h,s.x),s.z)*ds.y,
+  (mix(mix(e,h,s.x),mix(g,k,s.x),s.y)-mix(mix(a,b,s.x),mix(c,d,s.x),s.y))*ds.z);
+}
+fn curlNoise(p: vec3f) -> vec3f {
+ let a=noiseGradient(p); let b=noiseGradient(p+vec3f(31.7,8.4,17.2)); let c=noiseGradient(p+vec3f(11.3,47.1,5.6));
+ return vec3f(c.y-b.z,a.z-c.x,b.x-a.y);
+}
+fn interactionPoint() -> vec3f {
+ let center = moments[256].xyz; let focus = moments[257].xyz * u.cameraTarget.x;
+ let eye = focus - u.cameraForward.xyz * u.cameraForward.w;
+ let ray = safeNormal(u.cameraForward.xyz + u.cameraRight.xyz*u.mouse.x*u.cameraUp.w*u.cameraRight.w + u.cameraUp.xyz*u.mouse.y*u.cameraUp.w);
+ return eye + ray * max(12.0, dot(center-eye,u.cameraForward.xyz)) / max(0.1,dot(ray,u.cameraForward.xyz));
+}
+@compute @workgroup_size(64)
+fn simulate(@builtin(global_invocation_id) gid: vec3u, @builtin(local_invocation_index) lane: u32, @builtin(workgroup_id) group: vec3u) {
+ let id = gid.x; var contribution = vec4f(0.0);
+ if (id < u32(u.sim.z)) {
+  var b = birdsIn[id]; let p = b.position.xyz; let velocity = b.velocity.xyz;
+  let forward = safeNormal(velocity); let cell = cellCoord(p); let dt = u.sim.x;
+  var separation = vec3f(0.0); var alignment = vec3f(0.0); var cohesion = vec3f(0.0);
+  var alignmentCount = 0.0; var cohesionCount = 0.0; var neighborAlarm=0.0; var fearAvoidance=vec3f(0.0);
+  let fearRange=u.radii.w;
+  let separationSq = u.radii.x*u.radii.x; let alignmentSq = u.radii.y*u.radii.y; let cohesionSq = u.radii.z*u.radii.z;
+  for (var z = -1; z <= 1; z++) { for (var y = -1; y <= 1; y++) { for (var x = -1; x <= 1; x++) {
+   let c = cell+vec3i(x,y,z);
+   if (any(c < vec3i(0)) || any(c > vec3i(31,15,31))) { continue; }
+   let ci = cellIndex(c); let n = atomicLoad(&counts[ci]); let samples = min(n,24u);
+   let start = offsets[ci]; let rotation = hash(id*17u+ci*131u) % max(n,1u);
+   // 密集单元均匀分层采样，保持每只鸟最多 27×24 次候选检查。
+   for (var j = 0u; j < samples; j++) {
+    let k = (j*n/max(samples,1u)+rotation)%n; let otherId = sortedIds[start+k];
+    if (otherId == id) { continue; }
+    let other = birdsIn[otherId]; let delta = other.position.xyz-p; let distanceSq = dot(delta,delta);
+    if (distanceSq < 0.000001) { separation += vec3f(random(id+otherId)-0.5,0.2,random(id^otherId)-0.5); continue; }
+    let d=sqrt(distanceSq);
+    if (d<fearRange && other.traits.x>0.01) {
+     let transmission=other.traits.x*0.96*(1.0-smoothstep(fearRange*0.45,fearRange,d)*0.28);
+     neighborAlarm=max(neighborAlarm,transmission); fearAvoidance-=delta*(transmission/(distanceSq+1.0));
+    }
+    if (distanceSq < separationSq) {
+     let proximity = 1.0-d/u.radii.x;
+     separation -= delta * (proximity*proximity / (distanceSq+0.08));
+    }
+    if (dot(delta,forward) > -d*0.45) {
+     if (distanceSq < alignmentSq) { alignment += other.velocity.xyz; alignmentCount += 1.0; }
+     if (distanceSq < cohesionSq) { cohesion += delta; cohesionCount += 1.0; }
+    }
+   }
+  } } }
+  // 先传播再统一衰减，确保相邻受惊鸟不会相互维持永久恐惧。
+  var alarm=max(b.traits.x,mix(b.traits.x,neighborAlarm,1.0-exp(-dt*12.0)))*exp(-dt*1.45);
+  let calm=1.0-alarm*0.8; let recovery=select(0.0,1.0-smoothstep(1.5,5.0,moments[267].x),moments[267].w>0.0 && moments[268].w>1.5);
+  var acceleration = limitLength(separation*22.0,28.0)*u.weights.x*(1.0+alarm*0.5);
+  if (alignmentCount > 0.0) { acceleration += (alignment/alignmentCount-velocity)*u.weights.y*0.88*calm; }
+  if (cohesionCount > 0.0) { acceleration += (cohesion/cohesionCount)*u.weights.z*0.72*calm*(1.0+recovery*0.5); }
+  acceleration += (moments[256].xyz-p)*(0.018+recovery*0.12)*u.weights.z;
+  acceleration += limitLength(fearAvoidance*14.0,11.0)*alarm;
+  let noisePoint = p*0.047 + vec3f(u.sim.y*0.045,-u.sim.y*0.021,u.sim.y*0.028);
+  acceleration += curlNoise(noisePoint)*u.weights.w;
+  acceleration += vec3f(sin(u.sim.y*0.19),sin(u.sim.y*0.13)*0.55,cos(u.sim.y*0.17))*0.95;
+  let scaled = p/u.world.xyz; let edge = length(scaled);
+  let boundary = smoothstep(0.68,1.12,edge);
+  acceleration -= safeNormal(p/(u.world.xyz*u.world.xyz))*boundary*boundary*u.limits.z*1.9;
+  if (u.mouse.z > 0.0) {
+   let delta = p-interactionPoint(); let distance = length(delta); let radius = u.interaction.x;
+   let falloff = 1.0-smoothstep(0.02,1.0,distance/radius);
+   if (falloff > 0.0) {
+    let away = safeNormal(delta+vec3f(0.001,0.002,0.0));
+    if (u.mouse.w < 0.5) {
+     acceleration += (away+vec3f(0.0,0.14,0.0))*u.interaction.y*falloff*1.6;
+     alarm = max(alarm,falloff);
+    } else {
+     let tangent = safeNormal(cross(vec3f(0.0,1.0,0.0),away)+vec3f(0.001,0.0,0.001));
+     let radial = (distance-radius*0.36)/max(radius*0.36,1.0);
+     acceleration += (-away*radial*0.72+tangent*0.95-vec3f(0.0,delta.y/radius*1.6,0.0))*u.interaction.y*falloff;
+    }
+   }
+  }
+  // 可见猛禽产生直接恐惧；邻居在上面的网格查询中继续向外传播。
+  if (moments[260].w>0.5) {
+   let delta = p-moments[260].xyz;
+   let falloff = 1.0-smoothstep(0.0,1.0,length(delta)/u.showcaseFlight.x);
+   acceleration += (safeNormal(delta+vec3f(0.001,0.002,0.0))+vec3f(0.0,0.12,0.0))*u.showcaseFlight.y*falloff;
+   alarm = max(alarm,falloff);
+  }
+  // 受惊逃逸也保留柔和回转空间，不让逃逸力把鸟群持续推离椭球。
+  acceleration-=safeNormal(p/(u.world.xyz*u.world.xyz))*smoothstep(0.84,1.12,edge)*u.limits.z*alarm*2.5;
+  acceleration-=safeNormal(p/(u.world.xyz*u.world.xyz))*smoothstep(0.98,1.20,edge)*u.limits.z*2.0;
+  let speed = length(velocity); let cruise = mix(11.8+b.position.w*2.0,u.limits.y*0.98,alarm);
+  acceleration += forward*(cruise-speed)*0.85;
+  acceleration = limitLength(acceleration,u.limits.z*mix(1.0,1.8,alarm));
+  var nextVelocity = velocity+acceleration*dt;
+  let nextSpeed = clamp(length(nextVelocity),u.limits.x,u.limits.y);
+  nextVelocity = safeNormal(nextVelocity)*nextSpeed;
+  let nextForward = safeNormal(nextVelocity); let right = safeNormal(cross(vec3f(0.0,1.0,0.0),nextForward));
+  let targetBank = clamp(-atan(dot(acceleration,right)*0.105),-1.04,1.04);
+  let bank = mix(b.flight.x,targetBank,1.0-exp(-dt*5.5));
+  // 使用真实速度增量；达到速度上限后，持续的前向转向力不应被误判为一直加速。
+  let speedAcceleration = max((nextSpeed-speed)/dt,0.0);
+  let effort = clamp(0.20+speedAcceleration*0.09+max(nextForward.y,0.0)*2.1+alarm*0.8,0.0,1.0);
+  var glideTimer = b.flight.w;
+  let wantsPower = alarm > 0.12 || nextForward.y > 0.24 || speedAcceleration > 5.5;
+  if (wantsPower) { glideTimer = -1.2-b.position.w*1.8; }
+  else if (glideTimer > 0.0) {
+   glideTimer -= dt;
+   if (glideTimer <= 0.0) { glideTimer = -(2.5+b.position.w*3.0)*select(1.0,0.5,nextForward.y < -0.08); }
+  } else {
+   glideTimer += dt;
+   if (glideTimer >= 0.0) { glideTimer = 1.1+random(id+u32(floor(u.sim.y))*8191u)*1.05; }
+  }
+  let glideTarget = select(0.0,1.0,glideTimer > 0.0 && !wantsPower);
+  let glide = mix(b.flight.z,glideTarget,1.0-exp(-dt*6.5));
+  let frequency = (2.2+effort*2.3+alarm*0.9)*b.traits.y*u.sim.w;
+  let phase = fract(b.velocity.w+dt*frequency);
+  b.position = vec4f(p+nextVelocity*dt,b.position.w);
+  b.velocity = vec4f(nextVelocity,phase); b.flight = vec4f(bank,effort,glide,glideTimer);
+  b.traits.x = alarm; b.traits.z = mix(0.52,1.06,effort);
+  birdsOut[id] = b; contribution = vec4f(b.position.xyz,select(0.0,1.0,alarm > 0.3));
+ }
+ totals[lane] = contribution; workgroupBarrier();
+ for (var stride = 32u; stride > 0u; stride /= 2u) {
+  if (lane < stride) { totals[lane] += totals[lane+stride]; } workgroupBarrier();
+ }
+ if (lane == 0u) { moments[group.x] = totals[0]; }
+}
+@compute @workgroup_size(256)
+fn reduceCenter(@builtin(local_invocation_index) lane: u32) {
+ var v = vec4f(0.0); if (lane < (u32(u.sim.z)+63u)/64u) { v = moments[lane]; }
+ totals[lane] = v; workgroupBarrier();
+ for (var stride = 128u; stride > 0u; stride /= 2u) {
+  if (lane < stride) { totals[lane] += totals[lane+stride]; } workgroupBarrier();
+ }
+ if (lane == 0u) {
+  let center = totals[0]/u.sim.z; let previousAlarm = moments[256].w;
+  let pulse = max(moments[258].x*exp(-u.sim.x*3.8),clamp((center.w-previousAlarm)*22.0,0.0,1.0));
+  moments[256] = center;
+  moments[257] = vec4f(mix(moments[257].xyz,center.xyz,1.0-exp(-u.sim.x*1.6)),0.0);
+  moments[258] = vec4f(pulse,0.0,0.0,0.0);
+ }
+}
+`;
+const renderShader = commonShader + /* wgsl */ `
+@group(0) @binding(0) var<uniform> u: Params;
+@group(0) @binding(1) var<storage, read> birds: array<Bird>;
+@group(0) @binding(2) var<storage, read> previousBirds: array<Bird>;
+@group(0) @binding(3) var<storage, read> moments: array<vec4f>;
+fn cameraFocus() -> vec3f { return moments[257].xyz*u.cameraTarget.x; }
+fn eye() -> vec3f { return cameraFocus()-u.cameraForward.xyz*u.cameraForward.w; }
+fn project(p: vec3f) -> vec4f {
+ let v=p-eye(); let z=dot(v,u.cameraForward.xyz); let f=1.0/u.cameraUp.w;
+ return vec4f(dot(v,u.cameraRight.xyz)*f/u.cameraRight.w,dot(v,u.cameraUp.xyz)*f,1.0003334*z-0.2000667,z);
+}
+fn viewRay(uv: vec2f) -> vec3f {
+ return safeNormal(u.cameraForward.xyz+u.cameraRight.xyz*uv.x*u.cameraUp.w*u.cameraRight.w+u.cameraUp.xyz*uv.y*u.cameraUp.w);
+}
+fn skyColor(direction: vec3f) -> vec3f {
+ let h=direction.y; let warm=exp(-pow((h+0.035)*3.0,2.0));
+ let blue=mix(vec3f(0.23,0.32,0.45),vec3f(0.115,0.205,0.345),smoothstep(0.0,0.8,h));
+ var color=mix(blue,vec3f(1.10,0.62,0.37),warm*0.77);
+ let sunDirection=safeNormal(vec3f(-0.6,0.085,-0.8)); let sun=max(dot(direction,sunDirection),0.0);
+ color += vec3f(1.0,0.54,0.22)*(pow(sun,28.0)*0.18+pow(sun,1800.0)*1.5);
+ let cloud=sin(direction.x*11.0+direction.z*9.0+sin(direction.z*23.0)*0.35)*sin(h*56.0+direction.x*5.0);
+ color += vec3f(0.028,0.023,0.028)*smoothstep(0.1,0.9,cloud)*exp(-pow((h-0.19)*6.0,2.0));
+ return color;
+}
+struct ScreenVertex { @builtin(position) position: vec4f, @location(0) uv: vec2f }
+@vertex fn skyVertex(@builtin(vertex_index) id: u32) -> ScreenVertex {
+ let p=vec2f(f32((id<<1u)&2u),f32(id&2u))*2.0-1.0;
+ var o: ScreenVertex; o.position=vec4f(p,0.99999,1.0); o.uv=p; return o;
+}
+@fragment fn skyFragment(v: ScreenVertex) -> @location(0) vec4f { return vec4f(skyColor(viewRay(v.uv)),1.0); }
+// 周期的前 30% 快速下扇，后 70% 缓慢上抬。
+fn wingWave(phase: f32) -> f32 {
+ let p=fract(phase); if (p < 0.30) { return mix(0.95,-0.70,smoothstep(0.0,0.30,p)); }
+ return mix(-0.70,0.95,smoothstep(0.30,1.0,p));
+}
+fn flapRotate(p: vec3f, angle: f32) -> vec3f {
+ let s=sin(angle); let c=cos(angle); return vec3f(c*p.x-s*p.y,s*p.x+c*p.y,p.z);
+}
+struct BirdVertex {
+ @builtin(position) position: vec4f,
+ @location(0) world: vec3f,
+ @location(1) tint: f32,
+}
+@vertex fn birdVertex(@location(0) localPosition: vec3f, @location(1) segment: f32, @location(2) side: f32, @builtin(instance_index) id: u32) -> BirdVertex {
+ let b=birds[id]; let old=previousBirds[id]; let alpha=u.display.z;
+ let position=mix(old.position.xyz,b.position.xyz,alpha);
+ let forward=safeNormal(mix(old.velocity.xyz,b.velocity.xyz,alpha));
+ var right=safeNormal(cross(vec3f(0.0,1.0,0.0),forward));
+ if (dot(right,right)<0.01) { right=vec3f(1.0,0.0,0.0); }
+ let up=cross(forward,right); let bank=mix(old.flight.x,b.flight.x,alpha);
+ let bankRight=right*cos(bank)+up*sin(bank); let bankUp=up*cos(bank)-right*sin(bank);
+ let phase=old.velocity.w+fract(b.velocity.w-old.velocity.w+1.0)*alpha;
+  let power=b.traits.z*(1.0-smoothstep(0.0,0.95,b.flight.z)); let shoulder=wingWave(phase)*power;
+ let elbow=(wingWave(phase-0.17)*0.82-wingWave(phase)*0.32)*power;
+ var p=localPosition;
+ if (segment > 0.5) {
+  if (segment > 1.5) {
+   let hinge=vec3f(side*0.86,0.015,-0.04);
+   p=hinge+flapRotate(p-hinge,side*elbow);
+  }
+  let shoulderHinge=vec3f(side*0.115,0.015,0.18);
+  p=shoulderHinge+flapRotate(p-shoulderHinge,side*shoulder);
+  p.z -= b.flight.z*max(abs(p.x)-0.5,0.0)*0.13;
+ }
+ p *= b.traits.w;
+ let world=position+bankRight*p.x+bankUp*p.y+forward*p.z;
+ var o: BirdVertex; o.position=project(world); o.world=world; o.tint=b.position.w; return o;
+}
+@fragment fn birdFragment(v: BirdVertex, @builtin(front_facing) front: bool) -> @location(0) vec4f {
+ let normal=safeNormal(cross(dpdx(v.world),dpdy(v.world)))*select(-1.0,1.0,front);
+ let toEye=safeNormal(eye()-v.world); let rim=pow(1.0-abs(dot(normal,toEye)),2.3);
+ let edgeLight=0.35+0.65*max(dot(normal,safeNormal(vec3f(-0.6,0.3,-0.8))),0.0);
+ let silhouette=vec3f(0.008,0.013,0.021)*(0.9+v.tint*0.3)+vec3f(0.11,0.072,0.043)*rim*edgeLight;
+ let distance=length(v.world-eye()); let fog=1.0-exp(-max(distance-45.0,0.0)*0.0012);
+ return vec4f(mix(silhouette,skyColor(safeNormal(v.world-eye())),fog),1.0);
+}
+fn raptorShape(localPosition: vec3f,segment: f32,side: f32) -> BirdVertex {
+ let state=moments[260]; let motion=moments[261]; let previous=moments[262];
+ let animation=moments[263]; let old=moments[271]; let alpha=u.display.z;
+ let position=mix(previous.xyz,state.xyz,alpha); let forward=safeNormal(motion.xyz);
+ var right=safeNormal(cross(vec3f(0.0,1.0,0.0),forward)); if (dot(right,right)<0.01) { right=vec3f(1.0,0.0,0.0); }
+ let up=cross(forward,right); let bank=mix(previous.w,motion.w,alpha);
+ let bankRight=right*cos(bank)+up*sin(bank); let bankUp=up*cos(bank)-right*sin(bank);
+ let phase=old.x+fract(animation.x-old.x+1.0)*alpha;
+ let power=mix(old.y,animation.y,alpha); let fold=mix(old.z,animation.z,alpha);
+ var p=localPosition;
+ if (segment>0.5) {
+  let shoulder=wingWave(phase)*power+fold*0.43;
+  let elbow=(wingWave(phase-0.17)*0.82-wingWave(phase)*0.32)*power-fold*0.62;
+  if (segment>1.5) { let hinge=vec3f(side*0.86,0.015,-0.04); p=hinge+flapRotate(p-hinge,side*elbow); }
+  let hinge=vec3f(side*0.115,0.015,0.18); p=hinge+flapRotate(p-hinge,side*shoulder);
+  p.x*=1.25*(1.0-fold*0.42); p.z-=max(abs(p.x)-0.25,0.0)*(0.14+fold*0.65);
+  if (segment>1.5) { p.z-=max(abs(localPosition.x)-0.86,0.0)*0.24; }
+ }
+ // 身体为平均普通鸟的约 1.4 倍；额外翼展来自同一网格的顶点变形。
+ p*=1.12;
+ let world=position+bankRight*p.x+bankUp*p.y+forward*p.z;
+ var o: BirdVertex; o.position=project(world); o.world=world; o.tint=0.0;
+ if (state.w<0.5) { o.position=vec4f(2.0,2.0,2.0,1.0); } return o;
+}
+@vertex fn raptorVertex(@location(0) localPosition: vec3f, @location(1) segment: f32, @location(2) side: f32) -> BirdVertex {
+ return raptorShape(localPosition,segment,side);
+}
+@vertex fn raptorEdgeVertex(@location(0) localPosition: vec3f, @location(1) segment: f32, @location(2) side: f32) -> BirdVertex {
+ var o=raptorShape(localPosition,segment,side); if (moments[260].w<0.5) { return o; }
+ let center=project(mix(moments[262].xyz,moments[260].xyz,u.display.z));
+ let radial=o.position.xy/o.position.w-center.xy/center.w;
+ let direction=radial*inverseSqrt(max(dot(radial,radial),0.00000001));
+ // 极窄的像素轮廓补光保持真实体型，避免最远处或翼面侧对相机时完全丢失红色。
+ o.position=vec4f(o.position.xy+direction*3.4/u.display.xy*o.position.w,o.position.zw); return o;
+}
+@fragment fn raptorEdgeFragment() -> @location(0) vec4f { return vec4f(vec3f(2.4,0.022,0.011)*0.65,0.65); }
+@fragment fn raptorFragment(v: BirdVertex) -> @location(0) vec4f {
+ let normal=safeNormal(cross(dpdx(v.world),dpdy(v.world)));
+ let rim=pow(1.0-abs(dot(normal,safeNormal(eye()-v.world))),2.0);
+ // 红色保留少量自发光；较弱的大气衰减让远景和背光视角仍清楚。
+ let red=vec3f(1.05,0.025,0.019)+vec3f(2.0,0.10,0.045)*rim;
+ let fog=(1.0-exp(-length(v.world-eye())*0.0005))*0.08;
+ return vec4f(mix(red,skyColor(safeNormal(v.world-eye())),fog),1.0);
+}
+fn interactionPoint() -> vec3f {
+ let ray=viewRay(u.mouse.xy); let distance=max(12.0,dot(moments[256].xyz-eye(),u.cameraForward.xyz));
+ return eye()+ray*distance/max(0.1,dot(ray,u.cameraForward.xyz));
+}
+struct GlowVertex { @builtin(position) position: vec4f, @location(0) world: vec3f, @location(1) normal: vec3f, @location(2) @interpolate(flat) layer: u32 }
+@vertex fn glowVertex(@location(0) position: vec3f, @builtin(instance_index) layer: u32) -> GlowVertex {
+ let pulse=max(moments[258].x,u.interaction.z); var scale=1.0;
+ if (layer==1u) { scale=1.03+(1.0-pulse)*0.45; } else if (layer==2u) { scale=0.055; }
+ let world=interactionPoint()+position*u.interaction.x*scale;
+ var o: GlowVertex; o.position=project(world); o.world=world; o.normal=position; o.layer=layer;
+ if (u.mouse.z < 0.5) { o.position=vec4f(2.0,2.0,2.0,1.0); } return o;
+}
+@fragment fn glowFragment(v: GlowVertex) -> @location(0) vec4f {
+ let edge=pow(1.0-abs(dot(safeNormal(v.normal),safeNormal(eye()-v.world))),3.0);
+ let pulse=max(moments[258].x,u.interaction.z); var alpha=0.007+edge*0.07;
+ if (v.layer==1u) { alpha=edge*pulse*0.16; } else if (v.layer==2u) { alpha=0.22+edge*0.2; }
+ alpha *= u.mouse.z*(1.0-u.showcaseFlight.z);
+ let color=mix(vec3f(1.6,0.61,0.24),vec3f(0.33,1.05,1.3),u.mouse.w);
+ return vec4f(color*alpha,alpha);
+}
+`;
+const postShader = /* wgsl */ `
+@group(0) @binding(0) var hdr: texture_2d<f32>;
+@vertex fn vertexMain(@builtin(vertex_index) id: u32) -> @builtin(position) vec4f {
+ return vec4f(vec2f(f32((id<<1u)&2u),f32(id&2u))*2.0-1.0,0.0,1.0);
+}
+fn linearToSrgb(x: vec3f) -> vec3f {
+ return select(1.055*pow(max(x,vec3f(0.0)),vec3f(1.0/2.4))-0.055,12.92*x,x<=vec3f(0.0031308));
+}
+fn redGlow(p: vec2i) -> f32 {
+ let c=textureLoad(hdr,clamp(p,vec2i(0),vec2i(textureDimensions(hdr))-1),0).rgb;
+ return max(c.r-max(c.g,c.b)*3.0-0.1,0.0);
+}
+@fragment fn fragmentMain(@builtin(position) p: vec4f) -> @location(0) vec4f {
+ let pixel=vec2i(p.xy); var color=textureLoad(hdr,pixel,0).rgb;
+ // 只扩散猛禽的红色高亮，维持细小远景轮廓；不需要额外纹理或缓冲。
+ let close=redGlow(pixel+vec2i(1,0))+redGlow(pixel-vec2i(1,0))+redGlow(pixel+vec2i(0,1))+redGlow(pixel-vec2i(0,1));
+ let wide=redGlow(pixel+vec2i(3,0))+redGlow(pixel-vec2i(3,0))+redGlow(pixel+vec2i(0,3))+redGlow(pixel-vec2i(0,3));
+ color+=vec3f(0.32,0.014,0.006)*(close*0.3+wide*0.12);
+ let mapped=clamp((color*(2.51*color+0.03))/(color*(2.43*color+0.59)+0.14),vec3f(0.0),vec3f(1.0));
+ let size=vec2f(textureDimensions(hdr)); let uv=p.xy/size;
+ let vignette=1.0-0.13*pow(length((uv-0.5)*vec2f(1.1,1.0)),1.5);
+ let dither=(fract(sin(dot(p.xy,vec2f(12.9898,78.233)))*43758.5453)-0.5)/255.0;
+ return vec4f(linearToSrgb(mapped*vignette)+dither,1.0);
+}
+`;
+function showFallback(title, message, detail) {
+ document.getElementById('fallback-title').textContent = title;
+ document.getElementById('fallback-message').textContent = message;
+ document.getElementById('fallback-detail').textContent = detail;
+ fallback.hidden = false; canvas.dataset.state = 'unavailable';
+}
+function createBirdMesh() {
+ const vertices = [];
+ function vertex(p, segment = 0, side = 0) { vertices.push(p[0],p[1],p[2],segment,side); }
+ function triangle(a,b,c,segment = 0,side = 0) { vertex(a,segment,side);vertex(b,segment,side);vertex(c,segment,side); }
+ const rings = [[0.63,0.009,0.012],[0.22,0.12,0.135],[-0.32,0.085,0.09],[-0.67,0.009,0.012]];
+ for (let r=0;r<rings.length-1;r++) {
+  for (let j=0;j<6;j++) {
+   const a=j*Math.PI/3,b=(j+1)*Math.PI/3;
+   const p=[Math.cos(a)*rings[r][1],Math.sin(a)*rings[r][2],rings[r][0]];
+   const q=[Math.cos(b)*rings[r][1],Math.sin(b)*rings[r][2],rings[r][0]];
+   const s=[Math.cos(a)*rings[r+1][1],Math.sin(a)*rings[r+1][2],rings[r+1][0]];
+   const t=[Math.cos(b)*rings[r+1][1],Math.sin(b)*rings[r+1][2],rings[r+1][0]];
+   triangle(p,q,s);triangle(q,t,s);
+  }
+ }
+ for (const side of [-1,1]) {
+  const rootFront=[side*0.115,0.015,0.27],rootBack=[side*0.115,0.015,-0.32];
+  const elbowFront=[side*0.86,0.015,0.16],elbowBack=[side*0.86,0.015,-0.24],tip=[side*1.73,0.015,-0.55];
+  triangle(rootFront,elbowFront,rootBack,1,side);triangle(rootBack,elbowFront,elbowBack,1,side);
+  triangle(elbowFront,tip,elbowBack,2,side);
+  triangle([0,0,-0.37],[side*0.21,0.02,-0.86],[0,0,-0.73]);
+ }
+ return new Float32Array(vertices);
+}
+function createSphereMesh() {
+ const vertices=[],indices=[],segments=32,rings=18;
+ for(let y=0;y<=rings;y++) {
+  const phi=y/rings*Math.PI;
+  for(let x=0;x<=segments;x++) {
+   const theta=x/segments*Math.PI*2;
+   vertices.push(Math.sin(phi)*Math.cos(theta),Math.cos(phi),Math.sin(phi)*Math.sin(theta));
+  }
+ }
+ for(let y=0;y<rings;y++)for(let x=0;x<segments;x++) {
+  const a=y*(segments+1)+x,b=a+segments+1;
+  indices.push(a,b,a+1,b,b+1,a+1);
+ }
+ return {vertices:new Float32Array(vertices),indices:new Uint16Array(indices)};
+}
+async function start() {
+ if (!navigator.gpu) {
+  showFallback('WebGPU is not available','Open this file in a browser with WebGPU support and hardware acceleration enabled.','This experience needs WebGPU to simulate and draw the flock.'); return;
+ }
+ const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
+ if (!adapter) {
+  showFallback('No WebGPU adapter found','Enable hardware acceleration in your browser, then reopen this file.','Your browser could not find a compatible graphics device.'); return;
+ }
+ const device=await adapter.requestDevice();
+ const context=canvas.getContext('webgpu');
+ if(!context) throw new Error('The browser could not create a WebGPU canvas.');
+ let running=true;
+ device.addEventListener('uncapturederror',event=>{
+  event.preventDefault(); running=false; document.body.dataset.gpuError=event.error.message;
+  showFallback('The sky could not be rendered','The graphics device reported an error. Reload this page to try again.',event.error.message);
+ });
+ device.lost.then(info=>{
+  running=false;
+  if(info.reason!=='destroyed') showFallback('The graphics device was interrupted','Reload this page to reopen the sky.',info.message || 'Try closing other graphics-heavy applications.');
+ });
+ const format=navigator.gpu.getPreferredCanvasFormat();
+ context.configure({device,format,alphaMode:'opaque',colorSpace:'srgb'});
+ const config={count:4096,separation:1.65,alignment:1.15,cohesion:0.8,mouseRadius:22,mouseStrength:48,flap:1,separationRadius:2.4,alignmentRadius:7,cohesionRadius:10,minSpeed:7,maxSpeed:18,turnForce:24,raptorMin:4,raptorMax:8,raptorAuto:true};
+ let paused=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ let following=false,followAmount=0,pendingReset=true,resetSeed=17,ping=0,simTime=0,accumulator=0;
+ let pointerX=0,pointerY=0,pointerActive=false,pointerMode=0,pointerPulse=0;
+ let yaw=0.52,pitch=0.19,distance=163,targetDistance=163,yawVelocity=0,pitchVelocity=0,orbiting=false;
+ let lastPointerX=0,lastPointerY=0,leftDown=false,longPress=0,gestureActive=false;
+ let gestureX=0,gestureY=0,gestureDistance=0;
+ let cleanPlaying=false,allowCleanInteraction=false,cleanFade=0,cleanCameraBlend=0,cleanCameraOverride=0,cleanCameraIdle=0,cleanExitingCamera=false,cleanGhostActive=false;
+ let cleanClock=0,shotTime=0,shotNumber=0,cinemaYaw=0,raptorSerial=0;
+ let fullscreenOwned=false,fullscreenSeen=false,fullscreenPending=false,lastCursorMove=0,cursorHidden=false,savedFocus=null;
+ let pressStartedAt=0,pressX=0,pressY=0,pressMoved=false,cleanPressId=-1,lastTapAt=0,lastTapX=0,lastTapY=0;
+ const savedView=new Float64Array(8),cameraKnots=new Float64Array(16),shotDurations=new Float64Array(3),cinemaPose=new Float64Array(4),viewData=new Float64Array(11);
+ const touches=[{id:-1,x:0,y:0},{id:-1,x:0,y:0}];
+ const fpsEl=document.getElementById('fps'),countEl=document.getElementById('bird-count'),pauseEl=document.getElementById('pause'),followEl=document.getElementById('follow'),statusEl=document.getElementById('status');
+ const cleanEl=document.getElementById('clean-play'),cleanInteractionEl=document.getElementById('clean-interaction');
+ const uiElements=document.querySelectorAll('.masthead,.telemetry,#controls,#status,.field-note');
+ const canvasLabel=canvas.getAttribute('aria-label');
+ const numberFormat=new Intl.NumberFormat('en-US');
+ const sliders=[['count','count',0],['separation','separation',2],['alignment','alignment',2],['cohesion','cohesion',2],['mouse-radius','mouseRadius',0],['mouse-strength','mouseStrength',0],['flap','flap',2],['separation-radius','separationRadius',1],['alignment-radius','alignmentRadius',1],['cohesion-radius','cohesionRadius',1],['min-speed','minSpeed',0],['max-speed','maxSpeed',0],['turn-force','turnForce',0]];
+ for(const [id,key,digits] of sliders) {
+  const input=document.getElementById(id),output=document.getElementById(id+'-out');
+  input.addEventListener('input',()=>{
+   config[key]=Number(input.value);
+   output.textContent=id==='count'?numberFormat.format(config[key]):config[key].toFixed(digits)+(id==='flap'?'×':'');
+   if(id==='count') { countEl.textContent=numberFormat.format(config.count); pendingReset=true; }
+  });
+ }
+ const raptorMinEl=document.getElementById('raptor-min'),raptorMaxEl=document.getElementById('raptor-max');
+ function updateRaptorIntervals(changed) {
+  if(changed===raptorMinEl&&Number(raptorMinEl.value)>Number(raptorMaxEl.value))raptorMaxEl.value=raptorMinEl.value;
+  if(changed===raptorMaxEl&&Number(raptorMaxEl.value)<Number(raptorMinEl.value))raptorMinEl.value=raptorMaxEl.value;
+  config.raptorMin=Number(raptorMinEl.value);config.raptorMax=Number(raptorMaxEl.value);
+  document.getElementById('raptor-min-out').textContent=config.raptorMin.toFixed(1)+' s';
+  document.getElementById('raptor-max-out').textContent=config.raptorMax.toFixed(1)+' s';
+ }
+ raptorMinEl.addEventListener('input',()=>updateRaptorIntervals(raptorMinEl));
+ raptorMaxEl.addEventListener('input',()=>updateRaptorIntervals(raptorMaxEl));
+ document.getElementById('raptor-auto').addEventListener('change',event=>{config.raptorAuto=event.target.checked;});
+ function summonRaptor() {raptorSerial=(raptorSerial+1)%16000000;}
+ document.getElementById('summon-raptor').addEventListener('click',summonRaptor);
+ function updateStatus() {
+  statusEl.textContent=paused?'Flight paused':orbiting?'Orbiting':pointerActive?(pointerMode?'Attracting · hold':'Predator · move to scatter'):following?'Following the flock':'';
+  statusEl.classList.toggle('visible',Boolean(statusEl.textContent));
+ }
+ function updatePause() {
+  pauseEl.innerHTML=(paused?'Resume':'Pause')+' <span class="key">SPACE</span>';
+  pauseEl.setAttribute('aria-pressed',String(paused));document.body.dataset.paused=String(paused);updateStatus();
+ }
+ function resetFlock() { pendingReset=true;resetSeed=(resetSeed+1)%65535;pointerPulse=1; }
+ function ease(value) {return value*value*(3-2*value);}
+ function cleanViewBlend() {return ease(cleanCameraBlend)*(1-ease(cleanCameraOverride));}
+ function beginCleanCameraControl() {
+  const blend=cleanViewBlend(),manualX=Math.sin(yaw)*Math.cos(pitch)*distance,manualY=Math.sin(pitch)*distance,manualZ=Math.cos(yaw)*Math.cos(pitch)*distance;
+  const x=manualX+(cinemaPose[0]-manualX)*blend,y=manualY+(cinemaPose[1]-manualY)*blend,z=manualZ+(cinemaPose[2]-manualZ)*blend,radius=Math.max(0.01,Math.hypot(x,y,z));
+  yaw=Math.atan2(x,z);pitch=Math.asin(Math.max(-1,Math.min(1,y/radius)));distance=radius;targetDistance=Math.max(24,Math.min(340,radius));yawVelocity=0;pitchVelocity=0;
+  cleanCameraOverride=1;cleanCameraIdle=5;
+ }
+ function holdCleanCameraControl() {cleanCameraIdle=5;}
+ function snapshotCleanCamera() {
+  const blend=cleanViewBlend(),manualX=Math.sin(yaw)*Math.cos(pitch)*distance,manualY=Math.sin(pitch)*distance,manualZ=Math.cos(yaw)*Math.cos(pitch)*distance;
+  cinemaPose[0]=manualX+(cinemaPose[0]-manualX)*blend;cinemaPose[1]=manualY+(cinemaPose[1]-manualY)*blend;cinemaPose[2]=manualZ+(cinemaPose[2]-manualZ)*blend;cinemaPose[3]=0;
+ }
+ function writeCameraKnot(slot,mode,angle) {
+  const elevation=mode===0?0.57+Math.random()*0.27:mode===1?0.04+Math.random()*0.18:-0.08+Math.random()*0.18;
+  const radius=mode===0?156+Math.random()*28:mode===1?76+Math.random()*24:32+Math.random()*15;
+  const offset=slot*4;
+  cameraKnots[offset]=Math.sin(angle)*Math.cos(elevation)*radius;
+  cameraKnots[offset+1]=Math.sin(elevation)*radius;
+  cameraKnots[offset+2]=Math.cos(angle)*Math.cos(elevation)*radius;
+  cameraKnots[offset+3]=(Math.random()-0.5)*0.045;
+ }
+ function prepareCinema() {
+  cleanClock=0;shotTime=0;shotNumber=0;
+  shotDurations[0]=17;shotDurations[1]=15+Math.random()*5;shotDurations[2]=15+Math.random()*5;
+  writeCameraKnot(0,0,yaw-0.95);writeCameraKnot(1,0,yaw);
+  writeCameraKnot(2,1,yaw+1.05);cinemaYaw=yaw+2.15;writeCameraKnot(3,2,cinemaYaw);
+ }
+ function advanceCinema(dt) {
+  shotTime+=dt;
+  while(shotTime>=shotDurations[1]) {
+   shotTime-=shotDurations[1];shotNumber++;
+   for(let i=0;i<12;i++)cameraKnots[i]=cameraKnots[i+4];
+   shotDurations[0]=shotDurations[1];shotDurations[1]=shotDurations[2];shotDurations[2]=15+Math.random()*5;
+   cinemaYaw+=0.95+Math.random()*0.4;writeCameraKnot(3,(shotNumber+2)%3,cinemaYaw);
+  }
+  // 使用真实分段时长计算 Hermite 切线，使相邻段的位置和速度连续。
+  const t=shotTime/shotDurations[1],t2=t*t,t3=t2*t;
+  const h00=2*t3-3*t2+1,h10=t3-2*t2+t,h01=-2*t3+3*t2,h11=t3-t2;
+  for(let i=0;i<4;i++) {
+   const tangentA=(cameraKnots[i+8]-cameraKnots[i])*shotDurations[1]/(shotDurations[0]+shotDurations[1]);
+   const tangentB=(cameraKnots[i+12]-cameraKnots[i+4])*shotDurations[1]/(shotDurations[1]+shotDurations[2]);
+   cinemaPose[i]=h00*cameraKnots[i+4]+h10*tangentA+h01*cameraKnots[i+8]+h11*tangentB;
+  }
+ }
+ function updateCameraFrame(dt) {
+  cleanFade=Math.max(0,Math.min(1,cleanFade+(cleanPlaying?1:-1)*dt/0.4));
+  cleanCameraBlend=Math.max(0,Math.min(1,cleanCameraBlend+(cleanPlaying?1:-1)*dt/1.8));
+  if(cleanPlaying){cleanClock+=dt;cleanCameraIdle=Math.max(0,cleanCameraIdle-dt);if(cleanCameraIdle===0)cleanCameraOverride=Math.max(0,cleanCameraOverride-dt/1.8);}
+  if(cleanPlaying||(!cleanExitingCamera&&cleanCameraBlend>0))advanceCinema(dt);
+  if(cleanFade>=1)cleanGhostActive=false;
+  const blend=cleanPlaying?cleanViewBlend():ease(cleanCameraBlend),manualX=Math.sin(yaw)*Math.cos(pitch)*distance,manualY=Math.sin(pitch)*distance,manualZ=Math.cos(yaw)*Math.cos(pitch)*distance;
+  const x=manualX+(cinemaPose[0]-manualX)*blend,y=manualY+(cinemaPose[1]-manualY)*blend,z=manualZ+(cinemaPose[2]-manualZ)*blend;
+  const radius=Math.max(0.01,Math.hypot(x,y,z)),fx=-x/radius,fy=-y/radius,fz=-z/radius;
+  const horizontal=Math.max(0.001,Math.hypot(fx,fz)),rx=-fz/horizontal,rz=fx/horizontal;
+  const ux=-rz*fy,uy=rz*fx-rx*fz,uz=rx*fy,roll=cinemaPose[3]*blend,cr=Math.cos(roll),sr=Math.sin(roll);
+  viewData[0]=rx*cr+ux*sr;viewData[1]=uy*sr;viewData[2]=rz*cr+uz*sr;
+  viewData[3]=ux*cr-rx*sr;viewData[4]=uy*cr;viewData[5]=uz*cr-rz*sr;
+  viewData[6]=fx;viewData[7]=fy;viewData[8]=fz;viewData[9]=radius;viewData[10]=cleanPlaying?1:followAmount+(1-followAmount)*blend;
+  if(!cleanPlaying&&cleanCameraBlend===0)cleanExitingCamera=false;
+ }
+ function clearPointerState() {
+  pointerActive=false;pointerMode=0;pointerPulse=0;leftDown=false;orbiting=false;gestureActive=false;cleanPressId=-1;
+  touches[0].id=-1;touches[1].id=-1;clearTimeout(longPress);
+ }
+ function exitOwnedFullscreen() {
+  if(fullscreenOwned&&document.fullscreenElement===document.documentElement) {
+   try{const result=document.exitFullscreen();if(result)result.catch(()=>{});}catch{}
+  }
+ }
+ function setCleanPlay(enabled,exitFullscreen=true) {
+  if(enabled===cleanPlaying||canvas.dataset.state!=='ready')return;
+  if(enabled) {
+   savedView[0]=yaw;savedView[1]=pitch;savedView[2]=distance;savedView[3]=targetDistance;savedView[4]=yawVelocity;savedView[5]=pitchVelocity;savedView[6]=followAmount;savedView[7]=paused?1:0;
+   savedFocus=document.activeElement;cleanGhostActive=pointerActive;clearPointerState();yawVelocity=0;pitchVelocity=0;
+   prepareCinema();advanceCinema(0);cleanPlaying=true;cleanCameraOverride=0;cleanCameraIdle=0;cleanExitingCamera=false;paused=false;accumulator=0;lastCursorMove=performance.now();cursorHidden=false;
+   fullscreenSeen=Boolean(document.fullscreenElement);canvas.focus({preventScroll:true});
+   for(const element of uiElements){element.inert=true;element.setAttribute('aria-hidden','true');}
+   canvas.setAttribute('aria-label','Clean Play. Right drag to orbit, scroll to zoom, or use two fingers to orbit and zoom. Press H or Escape, or tap the sky to return to the controls.');
+   if(!document.fullscreenElement&&!fullscreenPending&&document.documentElement.requestFullscreen) {
+    fullscreenPending=true;
+    try {
+     const result=document.documentElement.requestFullscreen({navigationUI:'hide'});
+     Promise.resolve(result).then(()=>{
+      fullscreenPending=false;fullscreenOwned=document.fullscreenElement===document.documentElement;
+      if(cleanPlaying)fullscreenSeen=Boolean(document.fullscreenElement);else exitOwnedFullscreen();
+     },()=>{fullscreenPending=false;});
+    }catch{fullscreenPending=false;}
+   }
+  } else {
+   snapshotCleanCamera();cleanPlaying=false;cleanCameraBlend=1;cleanCameraOverride=0;cleanCameraIdle=0;cleanExitingCamera=true;clearPointerState();cleanGhostActive=false;
+   yaw=savedView[0];pitch=savedView[1];distance=savedView[2];targetDistance=savedView[3];followAmount=savedView[6];yawVelocity=0;pitchVelocity=0;
+   paused=savedView[7]===1;accumulator=0;cursorHidden=false;
+   for(const element of uiElements){element.inert=false;element.removeAttribute('aria-hidden');}
+   canvas.setAttribute('aria-label',canvasLabel);
+   if(exitFullscreen)exitOwnedFullscreen();
+   if(savedFocus?.isConnected)savedFocus.focus({preventScroll:true});
+  }
+  document.body.classList.toggle('clean-play',cleanPlaying);document.body.classList.remove('cursor-hidden');
+  document.body.dataset.cleanPlay=String(cleanPlaying);cleanEl.setAttribute('aria-pressed',String(cleanPlaying));updatePause();
+ }
+ function noteCursorMotion() {
+  lastCursorMove=performance.now();
+  if(cursorHidden){cursorHidden=false;document.body.classList.remove('cursor-hidden');}
+ }
+ cleanEl.addEventListener('click',()=>setCleanPlay(!cleanPlaying));
+ cleanInteractionEl.addEventListener('change',()=>{allowCleanInteraction=cleanInteractionEl.checked;});
+ document.addEventListener('fullscreenchange',()=>{
+  if(document.fullscreenElement){if(cleanPlaying)fullscreenSeen=true;}
+  else {fullscreenOwned=false;if(cleanPlaying&&fullscreenSeen)setCleanPlay(false,false);}
+ });
+ pauseEl.addEventListener('click',()=>{paused=!paused;accumulator=0;updatePause();});
+ document.getElementById('reset').addEventListener('click',resetFlock);
+ followEl.addEventListener('change',()=>{following=followEl.checked;updateStatus();});
+ window.addEventListener('keydown',event=>{
+  if(event.repeat || event.ctrlKey || event.metaKey || event.altKey || event.target.isContentEditable || event.target.matches?.('textarea,select,input:not([type="range"]):not([type="checkbox"])')) return;
+  if(event.code==='KeyH'){event.preventDefault();setCleanPlay(!cleanPlaying);return;}
+  if(event.code==='KeyP'){event.preventDefault();summonRaptor();return;}
+  if(cleanPlaying){if(event.code==='Escape'){event.preventDefault();setCleanPlay(false);}else if(event.code==='Space'||event.code==='KeyR'||event.code==='KeyF')event.preventDefault();return;}
+  if(event.code==='Space'){
+   if(event.target.matches?.('button,summary,input[type="checkbox"]'))return;
+   event.preventDefault();paused=!paused;accumulator=0;updatePause();
+  }
+  else if(event.code==='KeyR')resetFlock();
+  else if(event.code==='KeyF'){following=!following;followEl.checked=following;updateStatus();}
+ });
+ function setPointer(event) {pointerX=event.clientX/innerWidth*2-1;pointerY=1-event.clientY/innerHeight*2;}
+ function findTouch(id) {return touches[0].id===id?touches[0]:touches[1].id===id?touches[1]:null;}
+ function startGesture() {
+  gestureActive=true;pointerActive=false;pointerMode=0;pressMoved=true;lastTapAt=0;clearTimeout(longPress);
+  if(cleanPlaying)beginCleanCameraControl();
+  gestureX=(touches[0].x+touches[1].x)*0.5;gestureY=(touches[0].y+touches[1].y)*0.5;
+  gestureDistance=Math.hypot(touches[1].x-touches[0].x,touches[1].y-touches[0].y);updateStatus();
+ }
+ canvas.addEventListener('contextmenu',event=>event.preventDefault());
+ canvas.addEventListener('pointerdown',event=>{
+  noteCursorMotion();setPointer(event);canvas.setPointerCapture(event.pointerId);
+  pressStartedAt=performance.now();pressX=event.clientX;pressY=event.clientY;pressMoved=false;
+  if(cleanPlaying) {
+   if(event.pointerType==='touch') {
+    if(cleanPressId===-1)cleanPressId=event.pointerId;
+    const slot=touches[0].id===-1?touches[0]:touches[1].id===-1?touches[1]:null;
+    if(!slot)return;slot.id=event.pointerId;slot.x=event.clientX;slot.y=event.clientY;
+    if(touches[0].id!==-1&&touches[1].id!==-1)startGesture();
+    else if(allowCleanInteraction){gestureActive=false;pointerActive=true;pointerMode=0;pointerPulse=1;longPress=setTimeout(()=>{if(findTouch(event.pointerId)&&!gestureActive){pointerMode=1;pointerPulse=0.6;updateStatus();}},320);}
+    else pointerActive=false;
+    updateStatus();return;
+   }
+   cleanPressId=event.pointerId;
+   if(event.button===2) {
+    beginCleanCameraControl();orbiting=true;pointerActive=false;lastPointerX=event.clientX;lastPointerY=event.clientY;yawVelocity=0;pitchVelocity=0;updateStatus();return;
+   }
+   if(!allowCleanInteraction){pointerActive=false;return;}
+   if(event.button===0){leftDown=true;pointerActive=true;pointerMode=1;}
+   updateStatus();return;
+  }
+  if(cleanCameraBlend>0)return;
+  if(event.pointerType==='touch') {
+   const slot=touches[0].id===-1?touches[0]:touches[1].id===-1?touches[1]:null;
+   if(!slot)return;slot.id=event.pointerId;slot.x=event.clientX;slot.y=event.clientY;
+   if(touches[0].id!==-1&&touches[1].id!==-1)startGesture();
+   else {
+    gestureActive=false;pointerActive=true;pointerMode=0;pointerPulse=1;
+    longPress=setTimeout(()=>{if(findTouch(event.pointerId)&&!gestureActive){pointerMode=1;pointerPulse=0.6;updateStatus();}},320);
+   }
+  } else if(event.button===2) {
+   orbiting=true;pointerActive=false;lastPointerX=event.clientX;lastPointerY=event.clientY;yawVelocity=0;pitchVelocity=0;
+  } else if(event.button===0) {leftDown=true;pointerActive=true;pointerMode=1;pointerPulse=0.6;}
+  updateStatus();
+ });
+ canvas.addEventListener('pointermove',event=>{
+  noteCursorMotion();setPointer(event);
+  if(Math.hypot(event.clientX-pressX,event.clientY-pressY)>10)pressMoved=true;
+  if(cleanPlaying&&event.pointerType!=='touch') {
+   if(orbiting){}
+   else if(!allowCleanInteraction){pointerActive=false;return;}
+   else {pointerActive=true;pointerMode=leftDown?1:0;return;}
+  }
+  if(cleanCameraBlend>0&&!cleanPlaying)return;
+  if(event.pointerType==='touch') {
+   const slot=findTouch(event.pointerId);if(!slot)return;slot.x=event.clientX;slot.y=event.clientY;
+   if(touches[0].id!==-1&&touches[1].id!==-1) {
+    const x=(touches[0].x+touches[1].x)*0.5,y=(touches[0].y+touches[1].y)*0.5;
+    const separation=Math.hypot(touches[1].x-touches[0].x,touches[1].y-touches[0].y);
+    yawVelocity=-(x-gestureX)*0.09;pitchVelocity=(y-gestureY)*0.07;
+    yaw-=(x-gestureX)*0.005;pitch+=(y-gestureY)*0.004;
+    targetDistance=Math.max(cleanPlaying?24:42,Math.min(340,targetDistance*gestureDistance/Math.max(12,separation)));
+    if(cleanPlaying)holdCleanCameraControl();
+    gestureX=x;gestureY=y;gestureDistance=separation;
+   } else if(!gestureActive)pointerActive=cleanPlaying?allowCleanInteraction:true;
+  } else if(orbiting) {
+   const dx=event.clientX-lastPointerX,dy=event.clientY-lastPointerY;
+   yaw-=dx*0.005;pitch+=dy*0.004;yawVelocity=-dx*0.09;pitchVelocity=dy*0.07;
+   if(cleanPlaying)holdCleanCameraControl();
+   lastPointerX=event.clientX;lastPointerY=event.clientY;
+  } else {if(!pointerActive)pointerPulse=1;pointerActive=true;pointerMode=leftDown?1:0;}
+  updateStatus();
+ });
+ function endPointer(event) {
+  if(cleanPlaying) {
+   const isTap=event.type==='pointerup'&&event.pointerId===cleanPressId&&!pressMoved&&(event.pointerType==='touch'||event.button===0);
+   const shouldExit=isTap&&(!allowCleanInteraction||performance.now()-pressStartedAt<280);
+   if(shouldExit){setCleanPlay(false);return;}
+   if(event.pointerType==='touch') {
+    const slot=findTouch(event.pointerId);if(slot)slot.id=-1;
+    clearTimeout(longPress);pointerMode=0;pointerActive=false;
+    if(cleanPressId===event.pointerId)cleanPressId=-1;
+    if(touches[0].id===-1&&touches[1].id===-1)gestureActive=false;
+    updateStatus();return;
+   }
+   if(orbiting) {
+    orbiting=false;cleanPressId=-1;pointerActive=allowCleanInteraction&&event.clientX>=0&&event.clientX<innerWidth&&event.clientY>=0&&event.clientY<innerHeight;updateStatus();return;
+   }
+   if(!allowCleanInteraction){cleanPressId=-1;return;}
+   cleanPressId=-1;
+  }
+  const wasGesture=gestureActive;
+  if(event.pointerType==='touch') {
+   const slot=findTouch(event.pointerId);if(slot)slot.id=-1;
+   clearTimeout(longPress);pointerMode=0;pointerActive=false;
+   if(touches[0].id===-1&&touches[1].id===-1)gestureActive=false;
+  } else {orbiting=false;leftDown=false;pointerMode=0;pointerActive=event.type!=='pointercancel'&&event.clientX>=0&&event.clientX<innerWidth&&event.clientY>=0&&event.clientY<innerHeight;}
+  updateStatus();
+  if(event.pointerType==='touch'&&!cleanPlaying&&event.type==='pointerup'&&!wasGesture&&!pressMoved&&performance.now()-pressStartedAt<250) {
+   const now=performance.now();
+   if(lastTapAt>0&&now-lastTapAt<330&&Math.hypot(event.clientX-lastTapX,event.clientY-lastTapY)<32){lastTapAt=0;setCleanPlay(true);}
+   else{lastTapAt=now;lastTapX=event.clientX;lastTapY=event.clientY;}
+  }
+ }
+ canvas.addEventListener('pointerup',endPointer);canvas.addEventListener('pointercancel',endPointer);
+ canvas.addEventListener('pointerleave',event=>{if(event.pointerType!=='touch'&&!leftDown&&!orbiting){pointerActive=false;updateStatus();}});
+ panel.addEventListener('pointerenter',()=>{pointerActive=false;updateStatus();});
+ canvas.addEventListener('wheel',event=>{event.preventDefault();if(cleanPlaying){beginCleanCameraControl();targetDistance=Math.max(24,Math.min(340,targetDistance*Math.exp(event.deltaY*0.001)));holdCleanCameraControl();return;}if(cleanCameraBlend>0)return;targetDistance=Math.max(42,Math.min(340,targetDistance*Math.exp(event.deltaY*0.001)));},{passive:false});
+ window.addEventListener('blur',()=>{pointerActive=false;pointerMode=0;leftDown=false;orbiting=false;touches[0].id=-1;touches[1].id=-1;gestureActive=false;clearTimeout(longPress);updateStatus();});
+ updatePause();
+ // 所有模拟缓冲、参数环和工作数组只在启动时分配。
+ const storageUsage=GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_SRC;
+ function buffer(label,size,usage=storageUsage) {return device.createBuffer({label,size,usage});}
+ const stateBuffers=[buffer('Bird state A',maxBirds*64),buffer('Bird state B',maxBirds*64)];
+ const countBuffer=buffer('Grid counts',gridCells*4),offsetBuffer=buffer('Grid offsets',gridCells*4),cursorBuffer=buffer('Grid cursors',gridCells*4),idBuffer=buffer('Counting-sorted bird IDs',maxBirds*4),sumBuffer=buffer('Scan block sums',scanBlocks*4),momentBuffer=buffer('Flock moments',512*16);
+ const uniformBuffer=buffer('Fixed-step uniform ring',(maxSteps+1)*256,GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST);
+ const parameterData=new Float32Array((maxSteps+1)*64);
+ const dynamicOffsets=[];for(let i=0;i<=maxSteps;i++)dynamicOffsets.push(new Uint32Array([i*256]));
+ const birdMesh=createBirdMesh(),sphereMesh=createSphereMesh();
+ function upload(label,data,usage) {
+  const b=device.createBuffer({label,size:(data.byteLength+3)&~3,usage,mappedAtCreation:true});
+  new Uint8Array(b.getMappedRange()).set(new Uint8Array(data.buffer,data.byteOffset,data.byteLength));b.unmap();return b;
+ }
+ const birdVertexBuffer=upload('Shared low-poly bird mesh',birdMesh,GPUBufferUsage.VERTEX);
+ const sphereVertexBuffer=upload('Interaction sphere vertices',sphereMesh.vertices,GPUBufferUsage.VERTEX),sphereIndexBuffer=upload('Interaction sphere indices',sphereMesh.indices,GPUBufferUsage.INDEX);
+ const computeLayout=device.createBindGroupLayout({label:'Compute layout',entries:[
+  {binding:0,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform',hasDynamicOffset:true,minBindingSize:224}},
+  {binding:1,visibility:GPUShaderStage.COMPUTE,buffer:{type:'read-only-storage'}},
+  ...[2,3,4,5,6,7,8].map(binding=>({binding,visibility:GPUShaderStage.COMPUTE,buffer:{type:'storage'}}))
+ ]});
+ const renderLayout=device.createBindGroupLayout({label:'Scene layout',entries:[
+  {binding:0,visibility:GPUShaderStage.VERTEX|GPUShaderStage.FRAGMENT,buffer:{type:'uniform',hasDynamicOffset:true,minBindingSize:224}},
+  ...[1,2,3].map(binding=>({binding,visibility:GPUShaderStage.VERTEX|GPUShaderStage.FRAGMENT,buffer:{type:'read-only-storage'}}))
+ ]});
+ const computeGroups=[],renderGroups=[];
+ for(let i=0;i<2;i++) {
+  const buffers=[uniformBuffer,stateBuffers[i],stateBuffers[1-i],countBuffer,offsetBuffer,cursorBuffer,idBuffer,sumBuffer,momentBuffer];
+  computeGroups.push(device.createBindGroup({label:'Compute ping '+i,layout:computeLayout,entries:buffers.map((b,binding)=>({binding,resource:{buffer:b,...(binding===0?{size:224}:{})}}))}));
+  const sceneBuffers=[uniformBuffer,stateBuffers[i],stateBuffers[1-i],momentBuffer];
+  renderGroups.push(device.createBindGroup({label:'Scene ping '+i,layout:renderLayout,entries:sceneBuffers.map((b,binding)=>({binding,resource:{buffer:b,...(binding===0?{size:224}:{})}}))}));
+ }
+ device.pushErrorScope('validation');
+ async function shader(label,code) {
+  const module=device.createShaderModule({label,code});const info=await module.getCompilationInfo();
+  const errors=info.messages.filter(message=>message.type==='error');
+  if(errors.length)throw new Error(label+': '+errors.map(message=>'line '+message.lineNum+': '+message.message).join('\n'));
+  return module;
+ }
+ const modules=await Promise.all([shader('Grid, flight and animation compute',computeShader),shader('Instanced birds and sky',renderShader),shader('Tone mapping and sRGB output',postShader)]);
+ const computePipelineLayout=device.createPipelineLayout({bindGroupLayouts:[computeLayout]});
+ const computeEntries=['initialize','clearGrid','countGrid','densityPeaks','scanLocal','scanBlockSums','addBlockOffsets','scatterGrid','updateRaptor','simulate','reduceCenter'];
+ const computePipelineList=await Promise.all(computeEntries.map(entryPoint=>device.createComputePipelineAsync({label:entryPoint,layout:computePipelineLayout,compute:{module:modules[0],entryPoint}})));
+ const pipelines={};for(let i=0;i<computeEntries.length;i++)pipelines[computeEntries[i]]=computePipelineList[i];
+ const sceneLayout=device.createPipelineLayout({bindGroupLayouts:[renderLayout]});
+ const hdrTarget={format:'rgba16float'};
+ const skyPipeline=await device.createRenderPipelineAsync({label:'Procedural dusk sky',layout:sceneLayout,vertex:{module:modules[1],entryPoint:'skyVertex'},fragment:{module:modules[1],entryPoint:'skyFragment',targets:[hdrTarget]},primitive:{topology:'triangle-list'},depthStencil:{format:'depth24plus',depthWriteEnabled:false,depthCompare:'always'},multisample:{count:4}});
+ const birdPipeline=await device.createRenderPipelineAsync({label:'Double-sided instanced birds',layout:sceneLayout,vertex:{module:modules[1],entryPoint:'birdVertex',buffers:[{arrayStride:20,attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32'},{shaderLocation:2,offset:16,format:'float32'}]}]},fragment:{module:modules[1],entryPoint:'birdFragment',targets:[hdrTarget]},primitive:{topology:'triangle-list',cullMode:'none'},depthStencil:{format:'depth24plus',depthWriteEnabled:true,depthCompare:'less'},multisample:{count:4}});
+ const raptorPipeline=await device.createRenderPipelineAsync({label:'Red raptor, shared mesh',layout:sceneLayout,vertex:{module:modules[1],entryPoint:'raptorVertex',buffers:[{arrayStride:20,attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32'},{shaderLocation:2,offset:16,format:'float32'}]}]},fragment:{module:modules[1],entryPoint:'raptorFragment',targets:[hdrTarget]},primitive:{topology:'triangle-list',cullMode:'none'},depthStencil:{format:'depth24plus',depthWriteEnabled:true,depthCompare:'less'},multisample:{count:4}});
+ const raptorEdgePipeline=await device.createRenderPipelineAsync({label:'Raptor luminous edge',layout:sceneLayout,vertex:{module:modules[1],entryPoint:'raptorEdgeVertex',buffers:[{arrayStride:20,attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32'},{shaderLocation:2,offset:16,format:'float32'}]}]},fragment:{module:modules[1],entryPoint:'raptorEdgeFragment',targets:[{format:'rgba16float',blend:{color:{srcFactor:'one',dstFactor:'one-minus-src-alpha'},alpha:{srcFactor:'one',dstFactor:'one-minus-src-alpha'}}}]},primitive:{topology:'triangle-list',cullMode:'none'},depthStencil:{format:'depth24plus',depthWriteEnabled:false,depthCompare:'always'},multisample:{count:4}});
+ const glowPipeline=await device.createRenderPipelineAsync({label:'Interaction glow and scare pulse',layout:sceneLayout,vertex:{module:modules[1],entryPoint:'glowVertex',buffers:[{arrayStride:12,attributes:[{shaderLocation:0,offset:0,format:'float32x3'}]}]},fragment:{module:modules[1],entryPoint:'glowFragment',targets:[{format:'rgba16float',blend:{color:{srcFactor:'one',dstFactor:'one-minus-src-alpha',operation:'add'},alpha:{srcFactor:'one',dstFactor:'one-minus-src-alpha',operation:'add'}}}]},primitive:{topology:'triangle-list',cullMode:'back'},depthStencil:{format:'depth24plus',depthWriteEnabled:false,depthCompare:'less'},multisample:{count:4}});
+ const postPipeline=await device.createRenderPipelineAsync({label:'ACES to sRGB',layout:'auto',vertex:{module:modules[2],entryPoint:'vertexMain'},fragment:{module:modules[2],entryPoint:'fragmentMain',targets:[{format}]},primitive:{topology:'triangle-list'}});
+ const scenePassDescriptor={label:'4x MSAA HDR scene',colorAttachments:[{view:null,resolveTarget:null,clearValue:{r:0,g:0,b:0,a:1},loadOp:'clear',storeOp:'discard'}],depthStencilAttachment:{view:null,depthClearValue:1,depthLoadOp:'clear',depthStoreOp:'discard'}};
+ const postPassDescriptor={label:'Final color',colorAttachments:[{view:null,loadOp:'clear',clearValue:{r:0,g:0,b:0,a:1},storeOp:'store'}]};
+ const computePassDescriptor={label:'Uniform grid and flock update'};
+ const submittedCommands=[null];
+ let msaaTexture=null,hdrTexture=null,depthTexture=null,postGroup=null;
+ function resize() {
+  const ratio=Math.min(devicePixelRatio||1,1.6,Math.sqrt(2300000/Math.max(1,innerWidth*innerHeight)));
+  const width=Math.max(1,Math.min(device.limits.maxTextureDimension2D,Math.round(innerWidth*ratio))),height=Math.max(1,Math.min(device.limits.maxTextureDimension2D,Math.round(innerHeight*ratio)));
+  if(canvas.width===width&&canvas.height===height&&hdrTexture)return;
+  if(msaaTexture)msaaTexture.destroy();if(hdrTexture)hdrTexture.destroy();if(depthTexture)depthTexture.destroy();
+  canvas.width=width;canvas.height=height;
+  msaaTexture=device.createTexture({label:'4x HDR color',size:[width,height],format:'rgba16float',sampleCount:4,usage:GPUTextureUsage.RENDER_ATTACHMENT});
+  hdrTexture=device.createTexture({label:'Resolved HDR color',size:[width,height],format:'rgba16float',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.TEXTURE_BINDING});
+  depthTexture=device.createTexture({label:'4x scene depth',size:[width,height],format:'depth24plus',sampleCount:4,usage:GPUTextureUsage.RENDER_ATTACHMENT});
+  const hdrView=hdrTexture.createView();scenePassDescriptor.colorAttachments[0].view=msaaTexture.createView();scenePassDescriptor.colorAttachments[0].resolveTarget=hdrView;scenePassDescriptor.depthStencilAttachment.view=depthTexture.createView();
+  postGroup=device.createBindGroup({layout:postPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:hdrView}]});
+ }
+ resize();window.addEventListener('resize',resize);
+ const validation=await device.popErrorScope();if(validation)throw new Error(validation.message);
+ function fillParams(slot,dt,time,alpha) {
+  const o=slot*64,canInteract=pointerActive&&(!cleanPlaying||allowCleanInteraction);
+  parameterData[o]=dt;parameterData[o+1]=time;parameterData[o+2]=config.count;parameterData[o+3]=config.flap;
+  parameterData[o+4]=config.separationRadius;parameterData[o+5]=config.alignmentRadius;parameterData[o+6]=config.cohesionRadius;parameterData[o+7]=Math.max(8,config.separationRadius,config.alignmentRadius,config.cohesionRadius);
+  parameterData[o+8]=config.separation;parameterData[o+9]=config.alignment;parameterData[o+10]=config.cohesion;parameterData[o+11]=3.6;
+  parameterData[o+12]=config.minSpeed;parameterData[o+13]=config.maxSpeed;parameterData[o+14]=config.turnForce;
+  parameterData[o+16]=pointerX;parameterData[o+17]=pointerY;parameterData[o+18]=(slot===maxSteps?(pointerActive||cleanGhostActive):canInteract)?1:0;parameterData[o+19]=pointerMode;
+  parameterData[o+20]=config.mouseRadius;parameterData[o+21]=config.mouseStrength;parameterData[o+22]=pointerPulse;
+  parameterData[o+24]=viewData[0];parameterData[o+25]=viewData[1];parameterData[o+26]=viewData[2];parameterData[o+27]=canvas.width/canvas.height;
+  parameterData[o+28]=viewData[3];parameterData[o+29]=viewData[4];parameterData[o+30]=viewData[5];parameterData[o+31]=Math.tan(Math.PI/7.2);
+  parameterData[o+32]=viewData[6];parameterData[o+33]=viewData[7];parameterData[o+34]=viewData[8];parameterData[o+35]=viewData[9];
+  parameterData[o+36]=viewData[10];
+  parameterData[o+40]=78;parameterData[o+41]=37;parameterData[o+42]=66;parameterData[o+43]=resetSeed;
+  parameterData[o+44]=canvas.width;parameterData[o+45]=canvas.height;parameterData[o+46]=alpha;parameterData[o+47]=1;
+  parameterData[o+48]=config.raptorMin;parameterData[o+49]=config.raptorMax;parameterData[o+50]=config.raptorAuto?1:0;parameterData[o+51]=raptorSerial;
+  parameterData[o+52]=Math.max(42,config.mouseRadius*1.5+6);parameterData[o+53]=112;parameterData[o+54]=ease(cleanFade);parameterData[o+55]=ease(cleanCameraBlend);
+ }
+ let lastTime=performance.now(),fpsStart=lastTime,fpsFrames=0,totalSteps=0;
+ document.addEventListener('visibilitychange',()=>{lastTime=performance.now();accumulator=0;fpsStart=lastTime;fpsFrames=0;});
+ function frame(now) {
+  if(!running)return;
+  const elapsed=Math.max(0,Math.min((now-lastTime)/1000,0.1));lastTime=now;
+  if(document.hidden){requestAnimationFrame(frame);return;}
+  const damping=Math.exp(-elapsed*7.0);
+  if((!cleanPlaying&&cleanCameraBlend===0)||(cleanPlaying&&cleanCameraOverride>0)) {
+   if(!orbiting&&!gestureActive){yaw+=yawVelocity*elapsed;pitch+=pitchVelocity*elapsed;}
+   yawVelocity*=damping;pitchVelocity*=damping;pitch=Math.max(-1.24,Math.min(1.24,pitch));
+   distance+=(targetDistance-distance)*(1-Math.exp(-elapsed*7));
+   followAmount+=((following?1:0)-followAmount)*(1-Math.exp(-elapsed*2.5));
+  }
+  updateCameraFrame(elapsed);
+  const hideCursor=cleanPlaying&&now-lastCursorMove>=2000;
+  if(hideCursor!==cursorHidden){cursorHidden=hideCursor;document.body.classList.toggle('cursor-hidden',cursorHidden);}
+  pointerPulse*=Math.exp(-elapsed*4.5);
+  let steps=0;
+  if(pendingReset){simTime=0;accumulator=0;ping=0;totalSteps=0;}
+  else if(!paused){accumulator=Math.min(accumulator+elapsed,fixedDt*maxSteps);steps=Math.min(maxSteps,Math.floor(accumulator/fixedDt));accumulator-=steps*fixedDt;}
+  for(let i=0;i<steps;i++){simTime+=fixedDt;fillParams(i,fixedDt,simTime,0);}
+  if(pendingReset)fillParams(0,fixedDt,0,1);
+  fillParams(maxSteps,0,simTime,paused||pendingReset?1:accumulator/fixedDt);
+  device.queue.writeBuffer(uniformBuffer,0,parameterData);
+  // 命令编码器和交换链 view 由 WebGPU 每帧创建；没有逐帧 GPU 缓冲或工作数组分配。
+  const encoder=device.createCommandEncoder();
+  if(pendingReset||steps>0){
+   const pass=encoder.beginComputePass(computePassDescriptor);
+   if(pendingReset){pass.setPipeline(pipelines.initialize);pass.setBindGroup(0,computeGroups[0],dynamicOffsets[0]);pass.dispatchWorkgroups(maxBirds/64);pass.setBindGroup(0,computeGroups[1],dynamicOffsets[0]);pass.dispatchWorkgroups(maxBirds/64);pendingReset=false;}
+   const groups=Math.ceil(config.count/64);
+   for(let i=0;i<steps;i++){
+    pass.setBindGroup(0,computeGroups[ping],dynamicOffsets[i]);
+    pass.setPipeline(pipelines.clearGrid);pass.dispatchWorkgroups(gridCells/256);
+    pass.setPipeline(pipelines.countGrid);pass.dispatchWorkgroups(groups);
+    pass.setPipeline(pipelines.densityPeaks);pass.dispatchWorkgroups(gridCells/256);
+    pass.setPipeline(pipelines.scanLocal);pass.dispatchWorkgroups(gridCells/256);
+    pass.setPipeline(pipelines.scanBlockSums);pass.dispatchWorkgroups(1);
+    pass.setPipeline(pipelines.addBlockOffsets);pass.dispatchWorkgroups(gridCells/256);
+    pass.setPipeline(pipelines.scatterGrid);pass.dispatchWorkgroups(groups);
+    pass.setPipeline(pipelines.updateRaptor);pass.dispatchWorkgroups(1);
+    pass.setPipeline(pipelines.simulate);pass.dispatchWorkgroups(groups);
+    pass.setPipeline(pipelines.reduceCenter);pass.dispatchWorkgroups(1);
+    ping=1-ping;totalSteps++;
+   }
+   pass.end();
+  }
+  const scene=encoder.beginRenderPass(scenePassDescriptor);
+  scene.setBindGroup(0,renderGroups[ping],dynamicOffsets[maxSteps]);
+  scene.setPipeline(skyPipeline);scene.draw(3);
+  scene.setPipeline(birdPipeline);scene.setVertexBuffer(0,birdVertexBuffer);scene.draw(birdMesh.length/5,config.count);
+  scene.setPipeline(raptorEdgePipeline);scene.draw(birdMesh.length/5,1);
+  scene.setPipeline(raptorPipeline);scene.draw(birdMesh.length/5,1);
+  if((pointerActive||cleanGhostActive)&&cleanFade<1){scene.setPipeline(glowPipeline);scene.setVertexBuffer(0,sphereVertexBuffer);scene.setIndexBuffer(sphereIndexBuffer,'uint16');scene.drawIndexed(sphereMesh.indices.length,3);}
+  scene.end();
+  postPassDescriptor.colorAttachments[0].view=context.getCurrentTexture().createView();
+  const post=encoder.beginRenderPass(postPassDescriptor);post.setPipeline(postPipeline);post.setBindGroup(0,postGroup);post.draw(3);post.end();
+  submittedCommands[0]=encoder.finish();device.queue.submit(submittedCommands);
+  fpsFrames++;
+  if(now-fpsStart>=600){fpsEl.textContent=String(Math.round(fpsFrames*1000/(now-fpsStart)));fpsFrames=0;fpsStart=now;canvas.dataset.simTime=simTime.toFixed(3);canvas.dataset.steps=String(totalSteps);if(cleanPlaying){canvas.dataset.cleanTime=cleanClock.toFixed(3);canvas.dataset.shot=String(shotNumber);}}
+  requestAnimationFrame(frame);
+ }
+ canvas.dataset.state='ready';canvas.dataset.adapter=adapter.info?.description||adapter.info?.device||'WebGPU';
+ fallback.hidden=true;requestAnimationFrame(frame);
+}
+start().catch(error=>{
+ document.body.dataset.startupError=error.message;
+ showFallback('The sky could not be opened','This graphics device could not initialize the experience. Try updating your browser and graphics driver.',error.message);
+});
+})();
+</script>
+</body>
+</html>
